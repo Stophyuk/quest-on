@@ -49,6 +49,13 @@
               추가
             </button>
             <button
+              @click="openDetailModal"
+              class="px-5 py-3 bg-blue-500 text-white rounded-lg font-medium whitespace-nowrap"
+              title="반복 설정, 알림 등 상세 옵션"
+            >
+              🔄 상세
+            </button>
+            <button
               @click="close"
               class="px-5 py-3 bg-gray-100 rounded-lg"
             >
@@ -74,6 +81,8 @@ const showQuickAdd = ref(false)
 const quickTitle = ref('')
 const quickCategory = ref('etc')
 const inputRef = ref(null)
+const showDetailModal = ref(false)
+const emit = defineEmits(['openDetailModal'])
 
 const quickCategories = [
   { id: 'health', label: '💪 건강' },
@@ -108,6 +117,18 @@ async function addQuest() {
 
 function close() {
   showQuickAdd.value = false
+}
+
+// 상세 모달 열기 (Quests 페이지로 이동)
+function openDetailModal() {
+  // 입력된 제목이 있으면 임시 저장
+  const tempTitle = quickTitle.value
+  const tempCategory = quickCategory.value
+
+  close()
+
+  // Quests 페이지로 이동하며 데이터 전달
+  window.location.href = `/quests?newQuest=true&title=${encodeURIComponent(tempTitle)}&category=${tempCategory}`
 }
 
 // 모달이 열릴 때 input에 포커스

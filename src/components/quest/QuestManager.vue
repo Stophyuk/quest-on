@@ -4,12 +4,20 @@
     <div class="flex justify-between items-center">
       <button
         @click="showFilters = !showFilters"
-        class="px-4 py-2 bg-white rounded-lg shadow-sm flex items-center gap-2 text-sm font-medium"
+        class="px-4 py-2 bg-white rounded-lg shadow-sm flex items-center gap-2 text-sm font-medium relative"
       >
         <span>🔍</span>
         <span>필터 {{ showFilters ? '숨기기' : '보기' }}</span>
+        <!-- 활성 필터 배지 -->
+        <span
+          v-if="hasActiveFilters"
+          class="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse"
+        >
+          {{ activeFilterCount }}
+        </span>
       </button>
       <div class="text-sm text-gray-600">
+        <span v-if="hasActiveFilters" class="text-purple-600 font-medium">필터링: </span>
         총 {{ filteredAndSortedQuests.length }}개 퀘스트
       </div>
     </div>
@@ -67,14 +75,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuestStore } from '../../stores/quest'
 import { useQuestMetaStore, getPriorityLabel } from '../../stores/questMeta'
 import QuestEditCard from './QuestEditCard.vue'
 import QuestModal from './QuestModal.vue'
 import QuestDetailModal from './QuestDetailModal.vue'
 import QuestFilters from './QuestFilters.vue'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute()
+const router = useRouter()
 const questStore = useQuestStore()
 const questMetaStore = useQuestMetaStore()
 const showAddModal = ref(false)
@@ -83,6 +94,31 @@ const showFilters = ref(false)
 const showDetailModal = ref(false)
 const detailQuest = ref(null)
 const detailQuestMeta = ref(null)
+
+// URL 파라미터에서 새 퀘스트 정보 가져오기
+onMounted(() => {
+  if (route.query.newQuest === 'true') {
+    // 새 퀘스트 객체 생성
+    detailQuest.value = {
+      id: Date.now(), // 임시 ID
+      title: decodeURIComponent(route.query.title || ''),
+      description: '',
+      category: route.query.category || 'etc',
+      difficulty: { '😊': 3, '😐': 2, '😞': 1 },
+      progress: 0,
+      isCompleted: false,
+      createdAt: new Date().toISOString()
+    }
+    detailQuestMeta.value = {
+      ...questMetaStore.getQuestMeta(null), // 기본 메타 가져오기
+      category: route.query.category || 'etc'
+    }
+    showDetailModal.value = true
+
+    // URL 파라미터 제거
+    router.replace({ query: {} })
+  }
+})
 
 // 필터 상태
 const filters = ref({
@@ -100,6 +136,16 @@ const hasActiveFilters = computed(() => {
          filters.value.priority !== null ||
          !filters.value.showCompleted ||
          sortBy.value !== 'default'
+})
+
+// 활성 필터 개수
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.value.category) count++
+  if (filters.value.priority) count++
+  if (!filters.value.showCompleted) count++
+  if (sortBy.value !== 'default') count++
+  return count
 })
 
 // 필터링 및 정렬된 퀘스트
@@ -186,14 +232,34 @@ function closeDetailModal() {
 // 상세 편집 저장
 function saveDetailQuest(data) {
   try {
-    // 퀘스트 기본 정보 업데이트
-    const success = questStore.updateQuest(detailQuest.value.id, {
-      title: data.title
-    })
+    let success = false
+
+    // 새 퀘스트인지 기존 퀘스트 수정인지 확인
+    const existingQuest = questStore.quests.find(q => q.id === detailQuest.value.id)
+
+    if (existingQuest) {
+      // 기존 퀘스트 업데이트
+      success = questStore.updateQuest(detailQuest.value.id, {
+        title: data.title
+      })
+      if (success) {
+        questMetaStore.updateQuestMeta(detailQuest.value.id, data.meta)
+      }
+    } else {
+      // 새 퀘스트 추가
+      const newQuest = questStore.addQuest({
+        title: data.title,
+        description: detailQuest.value.description || '',
+        category: data.meta.category || 'etc',
+        difficulty: detailQuest.value.difficulty
+      })
+      if (newQuest) {
+        questMetaStore.setQuestMeta(newQuest.id, data.meta)
+        success = true
+      }
+    }
 
     if (success) {
-      // questMeta 정보 업데이트
-      questMetaStore.updateQuestMeta(detailQuest.value.id, data.meta)
       closeDetailModal()
     } else {
       alert('퀘스트 저장에 실패했습니다.')
@@ -209,10 +275,10 @@ function editQuest(quest) {
   editingQuest.value = { ...quest }
 }
 
-// 퀘스트 삭제
+// 퀘스트 삭제 (메타데이터도 함께)
 function deleteQuest(questId) {
   if (confirm('정말 이 퀘스트를 삭제하시겠습니까?')) {
-    questStore.removeQuest(questId)
+    questStore.removeQuest(questId, questMetaStore)
   }
 }
 

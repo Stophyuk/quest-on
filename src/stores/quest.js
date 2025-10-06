@@ -200,13 +200,16 @@ export const useQuestStore = defineStore('quest', () => {
       iterationCount++
     }
 
-    // 비정상적인 반복 감지 시 로그
+    // 비정상적인 반복 감지 시 로그 및 사용자 알림
     if (iterationCount >= maxIterations) {
       console.error('gainExperience: 무한루프 방지 작동', {
         level: level.value,
         experience: experience.value,
         experienceToNextLevel: experienceToNextLevel.value
       })
+      // 사용자에게 알리고 안전하게 저장
+      alert('⚠️ 경험치 처리 중 오류가 발생했습니다. 데이터를 안전하게 저장했습니다.')
+      saveData()
     }
 
     // 레벨업 발생시 이벤트 반환
@@ -358,11 +361,17 @@ export const useQuestStore = defineStore('quest', () => {
     }
   }
 
-  // 퀘스트 삭제 함수
-  function removeQuest(questId) {
+  // 퀘스트 삭제 함수 (questMeta도 함께 삭제)
+  function removeQuest(questId, questMetaStore = null) {
     const index = quests.value.findIndex(q => q.id === questId)
     if (index > -1) {
       quests.value.splice(index, 1)
+
+      // questMeta 동기화: 메타데이터도 함께 삭제
+      if (questMetaStore) {
+        questMetaStore.deleteQuestMeta(questId)
+      }
+
       saveData()
       return true
     }
@@ -520,6 +529,8 @@ export const useQuestStore = defineStore('quest', () => {
 
         if (generatedCount >= template.recurrenceCount) {
           console.log(`[Recurring Quest] Reached max count: ${templateQuest.title}`)
+          // 종료 조건 도달 시 반복 비활성화
+          questMetaStore.updateQuestMeta(template.questId, { isRecurring: false })
           return
         }
       }
