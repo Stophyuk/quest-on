@@ -16,7 +16,12 @@
       "Bash(java:*)",
       "Read(//c/AndroidSDK/**)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Quest ON - 컨디션 기반 퀘스트 관리 앱\n\n- Vue 3 + Vite + Pinia 기반 프로젝트 구조\n- 컨디션별 목표 자동 조정 시스템\n- 캐릭터 성장 및 레벨 시스템\n- 악세서리 상점 및 포인트 시스템\n- 온보딩 모달 및 사용자 프로필\n- localStorage 기반 데이터 영속성\n- 주간 리포트 및 달성률 추적\n- AI 퀘스트 추천 시스템\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git config:*)",
+      "Bash(npx cap init:*)",
+      "Bash(npx cap add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Capacitor 초기화 및 Android 플랫폼 추가\n\n- Capacitor 7.4.3 설치 완료\n- Android 플랫폼 추가\n- 플러그인 5개 설치:\n  - @capacitor/haptics\n  - @capacitor/local-notifications\n  - @capacitor/preferences\n  - @capacitor/splash-screen\n  - @capacitor/status-bar\n- capacitor.config.json 설정 완료\n- package.json에 android 빌드 스크립트 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
