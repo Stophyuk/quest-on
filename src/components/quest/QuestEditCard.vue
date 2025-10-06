@@ -24,9 +24,16 @@
       <!-- 액션 버튼들 -->
       <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
+          @click="$emit('detail', quest)"
+          class="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+          title="상세 편집"
+        >
+          📝
+        </button>
+        <button
           @click="$emit('edit', quest)"
           class="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-          title="편집"
+          title="빠른 편집"
         >
           ✏️
         </button>
@@ -115,7 +122,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'delete', 'update'])
+const emit = defineEmits(['edit', 'detail', 'delete', 'update'])
 
 const questStore = useQuestStore()
 const localProgress = ref(props.quest.progress)

@@ -47,6 +47,7 @@ const route = useRoute()
 const navItems = [
   { name: 'Home', path: '/', icon: '🏠', label: '홈', color: 'blue' },
   { name: 'Quests', path: '/quests', icon: '🎯', label: '퀘스트', color: 'purple' },
+  { name: 'Calendar', path: '/calendar', icon: '📅', label: '캘린더', color: 'pink' },
   { name: 'Profile', path: '/profile', icon: '👤', label: '프로필', color: 'green' }
 ]
 
@@ -66,6 +67,7 @@ function getIconBackgroundClasses(itemName) {
     const activeClasses = {
       blue: 'bg-blue-100 border border-blue-200',
       purple: 'bg-purple-100 border border-purple-200',
+      pink: 'bg-pink-100 border border-pink-200',
       green: 'bg-green-100 border border-green-200'
     }
     return activeClasses[color] || activeClasses.gray
@@ -84,6 +86,7 @@ function getLabelClasses(itemName) {
     const activeClasses = {
       blue: 'text-blue-700 font-semibold',
       purple: 'text-purple-700 font-semibold',
+      pink: 'text-pink-700 font-semibold',
       green: 'text-green-700 font-semibold'
     }
     return activeClasses[color] || 'text-gray-700 font-semibold'

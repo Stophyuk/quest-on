@@ -2,6 +2,7 @@
   <div id="app" class="min-h-screen bg-gradient-calm safe-area-top">
     <router-view />
     <BottomNavigation />
+    <FloatingAddButton />
 
     <!-- 온보딩 모달 -->
     <OnboardingModal
@@ -15,6 +16,7 @@
 import { ref, onMounted } from 'vue'
 import BottomNavigation from './components/common/BottomNavigation.vue'
 import OnboardingModal from './components/OnboardingModal.vue'
+import FloatingAddButton from './components/common/FloatingAddButton.vue'
 
 const showOnboarding = ref(false)
 

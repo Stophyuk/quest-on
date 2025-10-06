@@ -1,51 +1,62 @@
 <template>
   <div class="space-y-4">
-    <!-- 퀘스트 추가 버튼 -->
+    <!-- 필터 토글 버튼 -->
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-bold text-neutral-800">퀘스트 관리</h2>
       <button
-        @click="showAddModal = true"
-        class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
+        @click="showFilters = !showFilters"
+        class="px-4 py-2 bg-white rounded-lg shadow-sm flex items-center gap-2 text-sm font-medium"
       >
-        <span class="text-lg">➕</span>
-        <span>새 퀘스트</span>
+        <span>🔍</span>
+        <span>필터 {{ showFilters ? '숨기기' : '보기' }}</span>
       </button>
+      <div class="text-sm text-gray-600">
+        총 {{ filteredAndSortedQuests.length }}개 퀘스트
+      </div>
     </div>
 
-    <!-- 카테고리 필터 -->
-    <div class="flex flex-wrap gap-2">
-      <button
-        v-for="category in categories"
-        :key="category.value"
-        @click="selectedCategory = category.value"
-        class="px-3 py-1 rounded-full text-sm font-medium transition-colors"
-        :class="selectedCategory === category.value 
-          ? 'bg-primary-600 text-white' 
-          : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'"
-      >
-        {{ category.icon }} {{ category.label }}
-      </button>
-    </div>
+    <!-- 필터 컴포넌트 -->
+    <QuestFilters
+      v-if="showFilters"
+      :selected-category="filters.category"
+      :selected-priority="filters.priority"
+      :selected-sort="sortBy"
+      :show-completed="filters.showCompleted"
+      @update:category="filters.category = $event"
+      @update:priority="filters.priority = $event"
+      @update:sort="sortBy = $event"
+      @update:showCompleted="filters.showCompleted = $event"
+      @reset="resetFilters"
+    />
 
     <!-- 퀘스트 목록 -->
     <div class="space-y-3">
       <QuestEditCard
-        v-for="quest in filteredQuests"
+        v-for="quest in filteredAndSortedQuests"
         :key="quest.id"
         :quest="quest"
+        @detail="openDetailModal"
         @edit="editQuest"
         @delete="deleteQuest"
         @update="updateQuestProgress"
       />
-      
-      <div v-if="filteredQuests.length === 0" class="text-center py-8 text-neutral-500">
+
+      <div v-if="filteredAndSortedQuests.length === 0" class="text-center py-8 text-neutral-500">
         <div class="text-4xl mb-2">📝</div>
-        <p>{{ selectedCategory === 'all' ? '아직 퀘스트가 없어요' : '이 카테고리에 퀘스트가 없어요' }}</p>
-        <p class="text-sm">새 퀘스트를 추가해보세요!</p>
+        <p>{{ hasActiveFilters ? '필터 조건에 맞는 퀘스트가 없어요' : '아직 퀘스트가 없어요' }}</p>
+        <p class="text-sm">{{ hasActiveFilters ? '다른 필터를 시도해보세요!' : 'FAB 버튼으로 새 퀘스트를 추가해보세요!' }}</p>
       </div>
     </div>
 
-    <!-- 퀘스트 추가/편집 모달 -->
+    <!-- 퀘스트 상세 편집 모달 -->
+    <QuestDetailModal
+      v-if="showDetailModal"
+      :quest="detailQuest"
+      :quest-meta="detailQuestMeta"
+      @save="saveDetailQuest"
+      @close="closeDetailModal"
+    />
+
+    <!-- 퀘스트 빠른 편집 모달 (기존) -->
     <QuestModal
       v-if="showAddModal || editingQuest"
       :quest="editingQuest"
@@ -58,34 +69,142 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useQuestStore } from '../../stores/quest'
+import { useQuestMetaStore, getPriorityLabel } from '../../stores/questMeta'
 import QuestEditCard from './QuestEditCard.vue'
 import QuestModal from './QuestModal.vue'
+import QuestDetailModal from './QuestDetailModal.vue'
+import QuestFilters from './QuestFilters.vue'
 
 const questStore = useQuestStore()
+const questMetaStore = useQuestMetaStore()
 const showAddModal = ref(false)
 const editingQuest = ref(null)
-const selectedCategory = ref('all')
+const showFilters = ref(false)
+const showDetailModal = ref(false)
+const detailQuest = ref(null)
+const detailQuestMeta = ref(null)
 
-// 카테고리 정의
-const categories = [
-  { value: 'all', label: '전체', icon: '📋' },
-  { value: 'health', label: '건강', icon: '💚' },
-  { value: 'fitness', label: '운동', icon: '💪' },
-  { value: 'learning', label: '학습', icon: '📚' },
-  { value: 'work', label: '업무', icon: '💼' },
-  { value: 'hobby', label: '취미', icon: '🎨' },
-  { value: 'custom', label: '기타', icon: '⭐' }
-]
-
-// 필터링된 퀘스트
-const filteredQuests = computed(() => {
-  if (selectedCategory.value === 'all') {
-    return questStore.quests
-  }
-  return questStore.quests.filter(quest => quest.category === selectedCategory.value)
+// 필터 상태
+const filters = ref({
+  category: null,
+  priority: null,
+  showCompleted: true
 })
 
-// 퀘스트 편집
+// 정렬 기준
+const sortBy = ref('default')
+
+// 필터 적용 여부
+const hasActiveFilters = computed(() => {
+  return filters.value.category !== null ||
+         filters.value.priority !== null ||
+         !filters.value.showCompleted ||
+         sortBy.value !== 'default'
+})
+
+// 필터링 및 정렬된 퀘스트
+const filteredAndSortedQuests = computed(() => {
+  let quests = [...questStore.quests]
+
+  // 완료된 퀘스트 필터링
+  if (!filters.value.showCompleted) {
+    quests = quests.filter(q => !q.isCompleted)
+  }
+
+  // 카테고리 필터링
+  if (filters.value.category) {
+    quests = quests.filter(q => {
+      const meta = questMetaStore.getQuestMeta(q.id)
+      return meta.category === filters.value.category
+    })
+  }
+
+  // 우선순위 필터링
+  if (filters.value.priority) {
+    quests = quests.filter(q => {
+      const meta = questMetaStore.getQuestMeta(q.id)
+      const priority = getPriorityLabel(meta.urgency, meta.importance)
+      return priority.priority === filters.value.priority
+    })
+  }
+
+  // 정렬
+  if (sortBy.value === 'priority') {
+    quests.sort((a, b) => {
+      const metaA = questMetaStore.getQuestMeta(a.id)
+      const metaB = questMetaStore.getQuestMeta(b.id)
+      const priorityA = getPriorityLabel(metaA.urgency, metaA.importance).priority
+      const priorityB = getPriorityLabel(metaB.urgency, metaB.importance).priority
+      return priorityA - priorityB
+    })
+  } else if (sortBy.value === 'deadline') {
+    quests.sort((a, b) => {
+      const metaA = questMetaStore.getQuestMeta(a.id)
+      const metaB = questMetaStore.getQuestMeta(b.id)
+      if (!metaA.deadline && !metaB.deadline) return 0
+      if (!metaA.deadline) return 1
+      if (!metaB.deadline) return -1
+      return new Date(metaA.deadline) - new Date(metaB.deadline)
+    })
+  } else if (sortBy.value === 'category') {
+    quests.sort((a, b) => {
+      const metaA = questMetaStore.getQuestMeta(a.id)
+      const metaB = questMetaStore.getQuestMeta(b.id)
+      return (metaA.category || '').localeCompare(metaB.category || '')
+    })
+  } else if (sortBy.value === 'createdAt') {
+    quests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  }
+
+  return quests
+})
+
+// 필터 초기화
+function resetFilters() {
+  filters.value = {
+    category: null,
+    priority: null,
+    showCompleted: true
+  }
+  sortBy.value = 'default'
+}
+
+// 퀘스트 상세 편집 열기
+function openDetailModal(quest) {
+  detailQuest.value = { ...quest }
+  detailQuestMeta.value = questMetaStore.getQuestMeta(quest.id)
+  showDetailModal.value = true
+}
+
+// 상세 편집 모달 닫기
+function closeDetailModal() {
+  showDetailModal.value = false
+  detailQuest.value = null
+  detailQuestMeta.value = null
+}
+
+// 상세 편집 저장
+function saveDetailQuest(data) {
+  try {
+    // 퀘스트 기본 정보 업데이트
+    const success = questStore.updateQuest(detailQuest.value.id, {
+      title: data.title
+    })
+
+    if (success) {
+      // questMeta 정보 업데이트
+      questMetaStore.updateQuestMeta(detailQuest.value.id, data.meta)
+      closeDetailModal()
+    } else {
+      alert('퀘스트 저장에 실패했습니다.')
+    }
+  } catch (error) {
+    console.error('Error saving quest detail:', error)
+    alert('퀘스트 저장 중 오류가 발생했습니다.')
+  }
+}
+
+// 퀘스트 빠른 편집
 function editQuest(quest) {
   editingQuest.value = { ...quest }
 }
