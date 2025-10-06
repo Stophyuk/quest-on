@@ -293,6 +293,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useQuestStore } from '../stores/quest.js'
 import { usePersonalizationStore } from '../stores/personalization.js'
+import { storage } from '@/utils/storage'
 
 const emit = defineEmits(['complete'])
 
@@ -413,7 +414,7 @@ function prevStep() {
   }
 }
 
-function completeOnboarding() {
+async function completeOnboarding() {
   // 사용자 프로필 설정
   personalizationStore.userProfile.preferences.categories = onboardingData.value.interests
   personalizationStore.savePersonalizationData()
@@ -426,10 +427,10 @@ function completeOnboarding() {
     questStore.addQuest(quest)
   })
 
-  // 온보딩 완료 상태 localStorage에 저장
-  localStorage.setItem('quest-on-onboarding-completed', 'true')
-  localStorage.setItem('quest-on-user-nickname', onboardingData.value.nickname)
-  localStorage.setItem('quest-on-user-character', onboardingData.value.character)
+  // 온보딩 완료 상태 스토리지에 저장
+  await storage.set('quest-on-onboarding-completed', 'true')
+  await storage.set('quest-on-user-nickname', onboardingData.value.nickname)
+  await storage.set('quest-on-user-character', onboardingData.value.character)
 
   // 온보딩 완료 이벤트 발생
   emit('complete', {

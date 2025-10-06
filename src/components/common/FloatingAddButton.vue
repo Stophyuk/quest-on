@@ -65,6 +65,7 @@
 import { ref, nextTick } from 'vue'
 import { useQuestStore } from '@/stores/quest'
 import { useQuestMetaStore } from '@/stores/questMeta'
+import { haptics } from '@/utils/haptics'
 
 const questStore = useQuestStore()
 const questMetaStore = useQuestMetaStore()
@@ -96,10 +97,8 @@ async function addQuest() {
       category: quickCategory.value
     })
 
-    // 햅틱 피드백 (나중에 Capacitor Haptics로 교체)
-    if (navigator.vibrate) {
-      navigator.vibrate(50)
-    }
+    // 햅틱 피드백
+    await haptics.success()
   }
 
   quickTitle.value = ''

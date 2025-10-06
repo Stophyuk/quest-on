@@ -469,9 +469,83 @@ export const useQuestStore = defineStore('quest', () => {
   })
 
   // 반복 퀘스트 자동 생성 함수 (questMeta 스토어와 연동)
-  function generateRecurringQuests() {
-    // 이 함수는 외부(App.vue 등)에서 questMeta 스토어와 함께 사용됩니다
-    console.log('[Quest Store] generateRecurringQuests placeholder - 실제 구현은 반복 퀘스트 로직에서')
+  function generateRecurringQuests(questMetaStore) {
+    if (!questMetaStore) {
+      console.error('[Quest Store] questMetaStore is required for generateRecurringQuests')
+      return
+    }
+
+    const today = new Date()
+    const todayString = today.toISOString().split('T')[0]
+    const dayOfWeek = today.getDay()
+
+    // 반복 퀘스트 템플릿 가져오기
+    const recurringTemplates = questMetaStore.getRecurringTemplates()
+
+    recurringTemplates.forEach(template => {
+      const templateQuest = quests.value.find(q => q.id === template.questId)
+      if (!templateQuest) return
+
+      // 오늘 생성해야 하는지 확인
+      const shouldGenerate = questMetaStore.shouldGenerateToday(template)
+      if (!shouldGenerate) return
+
+      // 요일 체크 (추가 검증)
+      if (template.recurrenceType === 'daily' || template.recurrenceType === 'weekly') {
+        if (template.recurrenceDays && template.recurrenceDays.length > 0) {
+          if (!template.recurrenceDays.includes(dayOfWeek)) {
+            return
+          }
+        }
+      }
+
+      // 이미 오늘 생성된 퀘스트가 있는지 확인
+      const alreadyGenerated = quests.value.some(q => {
+        const meta = questMetaStore.getQuestMeta(q.id)
+        return meta.parentQuestId === template.questId &&
+               meta.generatedAt === todayString
+      })
+
+      if (alreadyGenerated) {
+        console.log(`[Recurring Quest] Already generated today: ${templateQuest.title}`)
+        return
+      }
+
+      // 종료 조건 체크 (횟수 제한)
+      if (template.recurrenceEndType === 'count' && template.recurrenceCount) {
+        const generatedCount = quests.value.filter(q => {
+          const meta = questMetaStore.getQuestMeta(q.id)
+          return meta.parentQuestId === template.questId
+        }).length
+
+        if (generatedCount >= template.recurrenceCount) {
+          console.log(`[Recurring Quest] Reached max count: ${templateQuest.title}`)
+          return
+        }
+      }
+
+      // 새 퀘스트 생성
+      const newQuestTitle = `${templateQuest.title} (${today.getMonth() + 1}/${today.getDate()})`
+      const newQuest = addQuest({
+        title: newQuestTitle,
+        description: templateQuest.description || '',
+        category: template.category || 'etc',
+        difficulty: templateQuest.difficulty
+      })
+
+      if (newQuest) {
+        // 새 퀘스트에 메타 정보 설정
+        questMetaStore.setQuestMeta(newQuest.id, {
+          ...template,
+          isRecurring: false, // 생성된 인스턴스는 반복이 아님
+          parentQuestId: template.questId, // 템플릿 ID 저장
+          generatedAt: todayString, // 생성 날짜 저장
+          scheduledDate: todayString // 오늘 날짜로 스케줄
+        })
+
+        console.log(`[Recurring Quest] Generated: ${newQuestTitle}`)
+      }
+    })
   }
 
   // 앱 시작 시 데이터 로드

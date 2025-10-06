@@ -17,7 +17,12 @@ import { ref, onMounted } from 'vue'
 import BottomNavigation from './components/common/BottomNavigation.vue'
 import OnboardingModal from './components/OnboardingModal.vue'
 import FloatingAddButton from './components/common/FloatingAddButton.vue'
+import { useQuestStore } from './stores/quest'
+import { useQuestMetaStore } from './stores/questMeta'
+import { storage, migrateToCapacitorPreferences } from './utils/storage'
 
+const questStore = useQuestStore()
+const questMetaStore = useQuestMetaStore()
 const showOnboarding = ref(false)
 
 function handleOnboardingComplete(data) {
@@ -27,14 +32,35 @@ function handleOnboardingComplete(data) {
   console.log('온보딩 완료:', data)
 }
 
-function checkOnboardingStatus() {
-  const isCompleted = localStorage.getItem('quest-on-onboarding-completed')
+async function checkOnboardingStatus() {
+  const isCompleted = await storage.get('quest-on-onboarding-completed')
   if (!isCompleted) {
     showOnboarding.value = true
   }
 }
 
+// 반복 퀘스트 자동 생성 (앱 시작 시)
+function initRecurringQuests() {
+  try {
+    questStore.generateRecurringQuests(questMetaStore)
+  } catch (error) {
+    console.error('[App] Failed to generate recurring quests:', error)
+  }
+}
+
+// 앱 초기화
+async function initApp() {
+  // 1. localStorage → Capacitor Preferences 마이그레이션 (네이티브에서만)
+  await migrateToCapacitorPreferences()
+
+  // 2. 온보딩 상태 확인
+  await checkOnboardingStatus()
+
+  // 3. 반복 퀘스트 자동 생성
+  initRecurringQuests()
+}
+
 onMounted(() => {
-  checkOnboardingStatus()
+  initApp()
 })
 </script>

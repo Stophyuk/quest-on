@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { storage } from '@/utils/storage'
 
 // 카테고리 정의
 export const CATEGORIES = [
@@ -168,21 +169,21 @@ export const useQuestMetaStore = defineStore('questMeta', () => {
     return getPriorityLabel(meta.urgency, meta.importance)
   }
 
-  // localStorage에 저장
-  function saveToLocalStorage() {
+  // 스토리지에 저장
+  async function saveToLocalStorage() {
     try {
-      localStorage.setItem('quest-on-meta', JSON.stringify(questMetas.value))
+      await storage.setJSON('quest-on-meta', questMetas.value)
     } catch (error) {
       console.error('Failed to save quest meta:', error)
     }
   }
 
-  // localStorage에서 불러오기
-  function loadFromLocalStorage() {
+  // 스토리지에서 불러오기
+  async function loadFromLocalStorage() {
     try {
-      const saved = localStorage.getItem('quest-on-meta')
+      const saved = await storage.getJSON('quest-on-meta')
       if (saved) {
-        questMetas.value = JSON.parse(saved)
+        questMetas.value = saved
       }
     } catch (error) {
       console.error('Failed to load quest meta:', error)
