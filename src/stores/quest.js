@@ -468,6 +468,12 @@ export const useQuestStore = defineStore('quest', () => {
     }
   })
 
+  // 반복 퀘스트 자동 생성 함수 (questMeta 스토어와 연동)
+  function generateRecurringQuests() {
+    // 이 함수는 외부(App.vue 등)에서 questMeta 스토어와 함께 사용됩니다
+    console.log('[Quest Store] generateRecurringQuests placeholder - 실제 구현은 반복 퀘스트 로직에서')
+  }
+
   // 앱 시작 시 데이터 로드
   loadData()
 
@@ -518,6 +524,9 @@ export const useQuestStore = defineStore('quest', () => {
     exportData,
     importData,
     getStorageInfo,
-    updateStreakCount
+    updateStreakCount,
+
+    // 반복 퀘스트
+    generateRecurringQuests
   }
 })
