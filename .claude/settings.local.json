@@ -23,7 +23,9 @@
       "Bash(npx cap add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Capacitor 초기화 및 Android 플랫폼 추가\n\n- Capacitor 7.4.3 설치 완료\n- Android 플랫폼 추가\n- 플러그인 5개 설치:\n  - @capacitor/haptics\n  - @capacitor/local-notifications\n  - @capacitor/preferences\n  - @capacitor/splash-screen\n  - @capacitor/status-bar\n- capacitor.config.json 설정 완료\n- package.json에 android 빌드 스크립트 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(npx cap:*)"
+      "Bash(npx cap:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []
