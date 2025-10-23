@@ -1,206 +1,189 @@
 <template>
-  <div class="min-h-screen px-4 pt-6 safe-area-bottom" style="padding-bottom: 80px;">
-    <!-- 캐릭터 영역 (상단) -->
-    <div class="card p-6 mb-6 text-center bg-gradient-to-br from-purple-50 to-blue-50">
-      <!-- 캐릭터 디스플레이 -->
-      <div class="mb-4 relative inline-block">
-        <div :class="[questStore.characterSizeClass, 'transition-all duration-500']">
-          {{ userCharacter }}{{ questStore.characterEffect }}
-        </div>
-        <!-- 장착한 악세사리 -->
-        <div v-if="questStore.equippedAccessory && equippedAccessoryData" class="absolute -top-4 right-1/2 transform translate-x-1/2">
-          <component
-            :is="equippedAccessoryData.icon"
-            :class="equippedAccessoryData.color"
-            :size="64"
-            :stroke-width="2.5"
-          />
-        </div>
-      </div>
-
-      <!-- 닉네임 및 레벨 -->
-      <h2 class="text-2xl font-bold text-neutral-800 mb-1 font-gmarket">
-        {{ userNickname }}
-      </h2>
-      <p class="text-lg text-purple-600 font-bold mb-2">레벨 {{ questStore.level }}</p>
-      <p class="text-sm text-neutral-600">{{ getStageLabel(questStore.characterStage) }}</p>
-
-      <!-- 성장 타임라인 -->
-      <div class="mt-6 pt-4 border-t border-neutral-200">
-        <p class="text-xs text-neutral-500 mb-3">성장 히스토리</p>
-        <div class="flex items-center justify-center gap-2">
-          <div class="text-center">
-            <div class="text-3xl">🐣</div>
-            <p class="text-xs text-neutral-500 mt-1">Lv.1</p>
-          </div>
-          <div class="text-lg text-neutral-400">→</div>
-          <div class="text-center" :class="{ 'opacity-50': questStore.level < 4 }">
-            <div class="text-4xl">🌟</div>
-            <p class="text-xs text-neutral-500 mt-1">Lv.4</p>
-          </div>
-          <div class="text-lg text-neutral-400">→</div>
-          <div class="text-center" :class="{ 'opacity-50': questStore.level < 8 }">
-            <div class="text-5xl">👑</div>
-            <p class="text-xs text-neutral-500 mt-1">Lv.8</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 연속 달성 배지 컬렉션 -->
-    <div class="card p-6 mb-6 bg-gradient-to-br from-orange-50 to-red-50">
-      <h3 class="text-lg font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-        <span class="text-xl">🔥</span>
-        연속 달성 배지
-      </h3>
-
-      <div class="flex items-center justify-center mb-4">
-        <div class="text-center">
-          <div class="text-6xl mb-2 animate-bounce">🔥</div>
-          <p class="text-3xl font-bold text-orange-600">{{ questStore.streakCount }}</p>
-          <p class="text-sm text-neutral-600">일 연속 달성</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-3">
-        <!-- 3일 배지 -->
-        <div class="text-center p-3 rounded-lg" :class="questStore.streakCount >= 3 ? 'bg-orange-100 border-2 border-orange-300' : 'bg-neutral-100 opacity-50'">
-          <div class="text-4xl mb-1">🔥</div>
-          <p class="text-xs font-bold" :class="questStore.streakCount >= 3 ? 'text-orange-700' : 'text-neutral-500'">불꽃 시작</p>
-          <p class="text-xs text-neutral-500">3일 연속</p>
-        </div>
-
-        <!-- 7일 배지 -->
-        <div class="text-center p-3 rounded-lg" :class="questStore.streakCount >= 7 ? 'bg-cyan-100 border-2 border-cyan-300' : 'bg-neutral-100 opacity-50'">
-          <div class="text-4xl mb-1">💎</div>
-          <p class="text-xs font-bold" :class="questStore.streakCount >= 7 ? 'text-cyan-700' : 'text-neutral-500'">다이아 의지</p>
-          <p class="text-xs text-neutral-500">7일 연속</p>
-        </div>
-
-        <!-- 30일 배지 -->
-        <div class="text-center p-3 rounded-lg" :class="questStore.streakCount >= 30 ? 'bg-yellow-100 border-2 border-yellow-300' : 'bg-neutral-100 opacity-50'">
-          <div class="text-4xl mb-1">👑</div>
-          <p class="text-xs font-bold" :class="questStore.streakCount >= 30 ? 'text-yellow-700' : 'text-neutral-500'">왕관 달성</p>
-          <p class="text-xs text-neutral-500">30일 연속</p>
-        </div>
-      </div>
-
-      <p class="text-xs text-center text-neutral-500 mt-3">
-        매일 80% 이상 완료하면 연속 달성! 🎯
-      </p>
-    </div>
-
-    <!-- 통계 카드 -->
-    <div class="card p-6 mb-6">
-      <h3 class="text-lg font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-        <span class="text-xl">📊</span>
-        나의 성장 통계
-      </h3>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-blue-50 rounded-lg p-4 text-center">
-          <p class="text-blue-600 text-sm mb-1">완료한 퀘스트</p>
-          <p class="text-3xl font-bold text-blue-700">{{ questStore.totalCompleted }}</p>
-          <p class="text-xs text-blue-600 mt-1">개</p>
-        </div>
-        <div class="bg-purple-50 rounded-lg p-4 text-center">
-          <p class="text-purple-600 text-sm mb-1">현재 레벨</p>
-          <p class="text-3xl font-bold text-purple-700">{{ questStore.level }}</p>
-          <p class="text-xs text-purple-600 mt-1">Level</p>
-        </div>
-        <div class="bg-amber-50 rounded-lg p-4 text-center">
-          <p class="text-amber-600 text-sm mb-1">보유 포인트</p>
-          <p class="text-3xl font-bold text-amber-700">{{ questStore.points }}</p>
-          <p class="text-xs text-amber-600 mt-1">💎</p>
-        </div>
-        <div class="bg-green-50 rounded-lg p-4 text-center">
-          <p class="text-green-600 text-sm mb-1">연속 달성</p>
-          <p class="text-3xl font-bold text-green-700">{{ questStore.streakCount }}</p>
-          <p class="text-xs text-green-600 mt-1">일</p>
-        </div>
-      </div>
-
-      <div class="mt-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 text-center border-2 border-purple-200">
-        <p class="text-sm text-neutral-700 font-gmarket">
-          <span class="font-bold text-purple-600">{{ questStore.totalCompleted }}개의 퀘스트</span>로<br>
-          <span class="font-bold text-blue-600">레벨 {{ questStore.level }}</span> 달성!
-        </p>
-      </div>
-    </div>
+  <div class="min-h-screen px-4 pt-6" style="padding-bottom: 90px;">
+    <!-- 헤더 -->
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-pixel text-purple font-bold">통계</h1>
+      <router-link
+        to="/"
+        class="text-sm text-purple-600 hover:text-purple-700 font-medium"
+      >
+        ← 홈으로
+      </router-link>
+    </header>
 
     <!-- 주간 리포트 -->
-    <WeeklyReport />
-
-    <!-- 악세사리 상점 -->
-    <AccessoryShop />
-
-    <!-- 설정 (컨디션 기능 포함) -->
-    <div class="card p-6 mt-6">
-      <h3 class="text-lg font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-        <span class="text-xl">⚙️</span>
-        설정
+    <div class="card p-6 mb-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <span>📊</span>
+        주간 리포트
       </h3>
 
-      <button
-        @click="showConditionSettings = !showConditionSettings"
-        class="w-full flex items-center justify-between p-3 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors"
-      >
-        <span class="text-neutral-700 font-medium">컨디션 설정</span>
-        <span class="text-neutral-500">{{ showConditionSettings ? '▲' : '▼' }}</span>
-      </button>
+      <div class="space-y-4">
+        <!-- 총 완료 -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-purple-100">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-purple-600 font-medium">총 완료</span>
+            <span class="text-2xl font-bold text-purple-900">{{ weeklyStats.totalCompleted }}</span>
+          </div>
+          <p class="text-xs text-purple-600 mt-1">최근 7일간</p>
+        </div>
 
-      <div v-if="showConditionSettings" class="mt-4">
-        <ConditionSelector />
+        <!-- 난이도별 통계 -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+            <div class="text-2xl mb-1">😊</div>
+            <div class="text-xl font-bold text-green-900">{{ weeklyStats.byDifficulty.easy }}</div>
+            <div class="text-xs text-green-600">쉬움</div>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
+            <div class="text-2xl mb-1">😐</div>
+            <div class="text-xl font-bold text-blue-900">{{ weeklyStats.byDifficulty.normal }}</div>
+            <div class="text-xs text-blue-600">보통</div>
+          </div>
+          <div class="bg-red-50 rounded-lg p-3 text-center border border-red-100">
+            <div class="text-2xl mb-1">😞</div>
+            <div class="text-xl font-bold text-red-900">{{ weeklyStats.byDifficulty.hard }}</div>
+            <div class="text-xs text-red-600">어려움</div>
+          </div>
+        </div>
+
+        <!-- 획득 경험치 -->
+        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border border-orange-100">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-orange-600 font-medium">획득 경험치</span>
+            <span class="text-2xl font-bold text-orange-900">{{ weeklyStats.totalXP }} XP</span>
+          </div>
+          <p class="text-xs text-orange-600 mt-1">최근 7일간</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 전체 통계 -->
+    <div class="card p-6 mb-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <span>🏆</span>
+        전체 기록
+      </h3>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+          <div class="text-3xl mb-2">🎯</div>
+          <div class="text-2xl font-bold text-gray-900">{{ questStore.totalCompleted }}</div>
+          <div class="text-xs text-gray-600 mt-1">총 완료 퀘스트</div>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+          <div class="text-3xl mb-2">⭐</div>
+          <div class="text-2xl font-bold text-gray-900">{{ questStore.level }}</div>
+          <div class="text-xs text-gray-600 mt-1">현재 레벨</div>
+        </div>
       </div>
     </div>
 
     <!-- 데이터 관리 -->
-    <DataManagementCard />
+    <div class="card p-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <span>⚙️</span>
+        데이터 관리
+      </h3>
+
+      <div class="space-y-3">
+        <button
+          @click="exportData"
+          class="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+        >
+          📤 데이터 내보내기
+        </button>
+
+        <button
+          @click="importData"
+          class="w-full py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+        >
+          📥 데이터 가져오기
+        </button>
+
+        <button
+          @click="resetData"
+          class="w-full py-3 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+        >
+          🗑️ 모든 데이터 초기화
+        </button>
+      </div>
+
+      <p class="text-xs text-gray-500 mt-4 text-center">
+        저장 용량: {{ storageInfo.used }} / {{ storageInfo.total }}
+      </p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useQuestStore } from '../stores/quest'
-import AccessoryShop from '../components/quest/AccessoryShop.vue'
-import ConditionSelector from '../components/quest/ConditionSelector.vue'
-import DataManagementCard from '../components/quest/DataManagementCard.vue'
-import WeeklyReport from '../components/quest/WeeklyReport.vue'
-import { getAccessory } from '../utils/accessories'
+import { useQuestStore } from '@/stores/quest'
 
 const questStore = useQuestStore()
 
-const userNickname = ref('')
-const userCharacter = ref('🐱')
-const showConditionSettings = ref(false)
+// 주간 통계
+const weeklyStats = computed(() => questStore.getWeeklyStats())
 
-// 장착한 악세사리 데이터
-const equippedAccessoryData = computed(() => {
-  if (!questStore.equippedAccessory) return null
-  return getAccessory(questStore.equippedAccessory)
-})
+// 저장 용량 정보
+const storageInfo = computed(() => questStore.getStorageInfo())
 
-// 캐릭터 이모지 매핑
-const characterEmojis = {
-  'cat': '🐱',
-  'dog': '🐶',
-  'pig': '🐷',
-  'rabbit': '🐰'
+// 데이터 내보내기
+function exportData() {
+  const data = questStore.exportData()
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `quest-on-backup-${new Date().toISOString().split('T')[0]}.json`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
-function getStageLabel(stage) {
-  const labels = {
-    'baby': '🐣 아기 단계 - 귀여운 시작!',
-    'teen': '🌟 청소년 단계 - 쑥쑥 성장 중!',
-    'adult': '👑 어른 단계 - 당당한 모습!'
+// 데이터 가져오기
+function importData() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'application/json'
+
+  input.onchange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const success = questStore.importData(event.target.result)
+        if (success) {
+          alert('✅ 데이터를 성공적으로 가져왔습니다!')
+          location.reload()
+        } else {
+          alert('❌ 데이터 가져오기에 실패했습니다.')
+        }
+      } catch (error) {
+        alert('❌ 잘못된 파일 형식입니다.')
+      }
+    }
+    reader.readAsText(file)
   }
-  return labels[stage] || ''
+
+  input.click()
+}
+
+// 데이터 초기화
+function resetData() {
+  if (confirm('⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+    if (confirm('⚠️ 마지막 확인: 정말로 삭제하시겠습니까?')) {
+      localStorage.clear()
+      alert('✅ 모든 데이터가 초기화되었습니다.')
+      location.reload()
+    }
+  }
 }
 
 onMounted(() => {
-  userNickname.value = localStorage.getItem('quest-on-user-nickname') || '모험가'
-  const characterId = localStorage.getItem('quest-on-user-character') || 'cat'
-  userCharacter.value = characterEmojis[characterId] || '🐱'
-
+  // 데이터 로드
   questStore.loadData()
 })
 </script>
