@@ -47,7 +47,6 @@ const route = useRoute()
 const navItems = [
   { name: 'Home', path: '/', icon: '🏠', label: '홈', color: 'blue' },
   { name: 'Quests', path: '/quests', icon: '🎯', label: '퀘스트', color: 'purple' },
-  { name: 'Calendar', path: '/calendar', icon: '📅', label: '캘린더', color: 'pink' },
   { name: 'Profile', path: '/profile', icon: '👤', label: '프로필', color: 'green' }
 ]
 

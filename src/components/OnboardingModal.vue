@@ -1,9 +1,9 @@
 <template>
-  <div class="fixed inset-0 z-50 bg-gradient-calm animate-fade-in overflow-hidden">
-    <div class="h-full flex items-center justify-center p-4 overflow-y-auto">
-      <div class="w-full max-w-md mx-auto">
+  <div class="fixed inset-0 z-50 bg-gradient-calm animate-fade-in">
+    <div class="h-full overflow-y-auto">
+      <div class="w-full max-w-md mx-auto px-4 pt-16 pb-8">
         <!-- 브랜드 헤더 -->
-        <div class="text-center mb-12 pt-8">
+        <div class="text-center mb-12">
           <h1 class="text-5xl font-bold font-pixel text-purple mb-2">
             Quest ON
           </h1>

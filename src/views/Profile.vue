@@ -68,13 +68,13 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
           <div class="text-3xl mb-2">🎯</div>
-          <div class="text-2xl font-bold text-gray-900">{{ questStore.totalCompleted }}</div>
+          <div class="text-2xl font-bold text-gray-900">{{ totalCompleted }}</div>
           <div class="text-xs text-gray-600 mt-1">총 완료 퀘스트</div>
         </div>
 
         <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
           <div class="text-3xl mb-2">⭐</div>
-          <div class="text-2xl font-bold text-gray-900">{{ questStore.level }}</div>
+          <div class="text-2xl font-bold text-gray-900">{{ currentLevel }}</div>
           <div class="text-xs text-gray-600 mt-1">현재 레벨</div>
         </div>
       </div>
@@ -118,13 +118,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useQuestStore } from '@/stores/quest'
 
 const questStore = useQuestStore()
 
 // 주간 통계
 const weeklyStats = computed(() => questStore.getWeeklyStats())
+
+// 전체 기록 (computed로 반응성 보장)
+const totalCompleted = computed(() => questStore.totalCompleted)
+const currentLevel = computed(() => questStore.level)
 
 // 저장 용량 정보
 const storageInfo = computed(() => questStore.getStorageInfo())
@@ -182,8 +186,6 @@ function resetData() {
   }
 }
 
-onMounted(() => {
-  // 데이터 로드
-  questStore.loadData()
-})
+// onMounted에서 loadData()를 호출하지 않음
+// store는 이미 초기화 시에 데이터를 로드하고 watch를 통해 자동 저장됨
 </script>

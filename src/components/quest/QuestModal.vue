@@ -30,6 +30,23 @@
           >
         </div>
 
+        <!-- 매일 반복 -->
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              v-model="form.isRecurring"
+              type="checkbox"
+              class="w-5 h-5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+            >
+            <div class="flex-1">
+              <div class="font-medium text-purple-900">매일 반복하기 🔄</div>
+              <div class="text-xs text-purple-600 mt-0.5">
+                매일 자정에 자동으로 리셋되며 연속 달성 일수를 추적합니다
+              </div>
+            </div>
+          </label>
+        </div>
+
         <!-- 난이도 -->
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-2">
@@ -42,15 +59,32 @@
               type="button"
               @click="form.difficulty = level.value"
               :class="[
-                'p-4 rounded-xl border-2 transition-all duration-200 text-center',
+                'p-4 rounded-xl border-2 transition-all duration-200 text-center relative',
                 form.difficulty === level.value
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-neutral-200 hover:border-neutral-300'
+                  ? 'border-purple-500 bg-purple-100 shadow-md scale-105'
+                  : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
               ]"
             >
+              <!-- 선택 체크마크 -->
+              <div
+                v-if="form.difficulty === level.value"
+                class="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center"
+              >
+                <span class="text-white text-xs">✓</span>
+              </div>
               <div class="text-2xl mb-1">{{ level.emoji }}</div>
-              <div class="text-xs font-medium text-neutral-700">{{ level.label }}</div>
-              <div class="text-xs text-neutral-500 mt-1">{{ level.xp }}XP</div>
+              <div
+                class="text-xs font-medium"
+                :class="form.difficulty === level.value ? 'text-purple-700' : 'text-neutral-700'"
+              >
+                {{ level.label }}
+              </div>
+              <div
+                class="text-xs mt-1"
+                :class="form.difficulty === level.value ? 'text-purple-600 font-semibold' : 'text-neutral-500'"
+              >
+                {{ level.xp }}XP
+              </div>
             </button>
           </div>
         </div>
@@ -114,7 +148,8 @@ const difficulties = [
 // 폼 데이터
 const form = ref({
   title: '',
-  difficulty: 'normal'
+  difficulty: 'normal',
+  isRecurring: false
 })
 
 // 빠른 추천
@@ -137,7 +172,8 @@ function submitForm() {
 
   questStore.addQuest({
     title: form.value.title.trim(),
-    difficulty: form.value.difficulty
+    difficulty: form.value.difficulty,
+    isRecurring: form.value.isRecurring
   })
 
   emit('close')
