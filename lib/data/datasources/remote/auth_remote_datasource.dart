@@ -114,17 +114,43 @@ class AuthRemoteDataSource {
 
   /// AuthException 처리
   Exception _handleAuthException(AuthException e) {
-    switch (e.statusCode) {
-      case '400':
-        return Exception('잘못된 요청입니다.');
-      case '401':
-        return Exception('이메일 또는 비밀번호가 올바르지 않습니다.');
-      case '422':
-        return Exception('이미 등록된 이메일입니다.');
-      case '429':
-        return Exception('너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.');
-      default:
-        return Exception(e.message);
+    // 디버깅용 로그
+    print('AuthException: ${e.message}, statusCode: ${e.statusCode}');
+
+    // 에러 메시지 우선 확인
+    final message = e.message.toLowerCase();
+
+    if (message.contains('invalid login credentials') ||
+        message.contains('invalid email or password')) {
+      return Exception('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
+
+    if (message.contains('user already registered') ||
+        message.contains('email already registered')) {
+      return Exception('이미 등록된 이메일입니다.');
+    }
+
+    if (message.contains('email not confirmed')) {
+      return Exception('이메일 인증이 필요합니다. 메일함을 확인해주세요.');
+    }
+
+    if (message.contains('password') && message.contains('weak')) {
+      return Exception('비밀번호는 최소 6자 이상이어야 합니다.');
+    }
+
+    // statusCode로 처리
+    if (e.statusCode != null) {
+      switch (e.statusCode) {
+        case '400':
+          return Exception('입력 정보를 확인해주세요.');
+        case '422':
+          return Exception('이미 등록된 이메일입니다.');
+        case '429':
+          return Exception('너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    }
+
+    // 기본 메시지
+    return Exception(e.message.isNotEmpty ? e.message : '인증 중 오류가 발생했습니다.');
   }
 }

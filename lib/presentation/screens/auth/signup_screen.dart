@@ -68,9 +68,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // "Exception: " 접두사 제거
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(errorMessage),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -214,7 +220,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: Row(
                     children: [
-                      const Text('이용약관 및 개인정보처리방침에 동의합니다'),
+                      const Expanded(
+                        child: Text(
+                          '이용약관 및 개인정보처리방침에 동의합니다',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
                       TextButton(
                         onPressed: () {
                           // TODO: 이용약관 표시
