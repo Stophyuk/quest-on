@@ -8,7 +8,8 @@
         </h3>
         <button
           @click="$emit('close')"
-          class="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+          class="p-3 rounded-lg hover:bg-neutral-100 transition-colors text-xl"
+          aria-label="닫기"
         >
           ✖️
         </button>

@@ -49,8 +49,11 @@
         <div class="text-purple-900 font-bold text-xl">{{ totalCompleted }}</div>
       </div>
       <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 text-center border border-pink-100">
-        <div class="text-pink-600 text-xs font-medium mb-1">진화까지</div>
-        <div class="text-pink-900 font-bold text-xl">{{ levelsToNextStage }}</div>
+        <div class="text-pink-600 text-xs font-medium mb-1">다음 진화까지</div>
+        <div class="text-pink-900 font-bold text-xl">
+          <span v-if="levelsToNextStage > 0">Lv.{{ levelsToNextStage }}</span>
+          <span v-else>완료!</span>
+        </div>
       </div>
     </div>
   </div>

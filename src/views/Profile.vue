@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen px-4 pt-6" style="padding-bottom: 90px;">
     <!-- 헤더 -->
-    <header class="flex items-center justify-between mb-6">
+    <header class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-pixel text-purple font-bold">통계</h1>
       <router-link
         to="/"
@@ -12,17 +12,25 @@
     </header>
 
     <!-- 주간 리포트 -->
-    <div class="card p-6 mb-6">
-      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <span>📊</span>
-        주간 리포트
-      </h3>
+    <div class="card p-5 mb-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <span>📊</span>
+          주간 리포트
+        </h3>
+        <button
+          @click="showWeeklyReflection = true"
+          class="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+        >
+          📝 주간 회고
+        </button>
+      </div>
 
       <div class="space-y-4">
         <!-- 총 완료 -->
-        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-purple-100">
+        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
           <div class="flex items-center justify-between">
-            <span class="text-sm text-purple-600 font-medium">총 완료</span>
+            <span class="text-sm text-purple-700 font-medium">총 완료</span>
             <span class="text-2xl font-bold text-purple-900">{{ weeklyStats.totalCompleted }}</span>
           </div>
           <p class="text-xs text-purple-600 mt-1">최근 7일간</p>
@@ -30,25 +38,25 @@
 
         <!-- 난이도별 통계 -->
         <div class="grid grid-cols-3 gap-3">
-          <div class="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+          <div class="bg-green-50 rounded-lg p-3 text-center border border-green-200">
             <div class="text-2xl mb-1">😊</div>
-            <div class="text-xl font-bold text-green-900">{{ weeklyStats.byDifficulty.easy }}</div>
-            <div class="text-xs text-green-600">쉬움</div>
+            <div class="text-xl font-bold text-green-900">{{ weeklyStats.easy }}</div>
+            <div class="text-xs text-green-700">쉬움</div>
           </div>
-          <div class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100">
+          <div class="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
             <div class="text-2xl mb-1">😐</div>
-            <div class="text-xl font-bold text-blue-900">{{ weeklyStats.byDifficulty.normal }}</div>
-            <div class="text-xs text-blue-600">보통</div>
+            <div class="text-xl font-bold text-blue-900">{{ weeklyStats.normal }}</div>
+            <div class="text-xs text-blue-700">보통</div>
           </div>
-          <div class="bg-red-50 rounded-lg p-3 text-center border border-red-100">
+          <div class="bg-red-50 rounded-lg p-3 text-center border border-red-200">
             <div class="text-2xl mb-1">😞</div>
-            <div class="text-xl font-bold text-red-900">{{ weeklyStats.byDifficulty.hard }}</div>
-            <div class="text-xs text-red-600">어려움</div>
+            <div class="text-xl font-bold text-red-900">{{ weeklyStats.hard }}</div>
+            <div class="text-xs text-red-700">어려움</div>
           </div>
         </div>
 
         <!-- 획득 경험치 -->
-        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border border-orange-100">
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
           <div class="flex items-center justify-between">
             <span class="text-sm text-orange-600 font-medium">획득 경험치</span>
             <span class="text-2xl font-bold text-orange-900">{{ weeklyStats.totalXP }} XP</span>
@@ -59,8 +67,8 @@
     </div>
 
     <!-- 전체 통계 -->
-    <div class="card p-6 mb-6">
-      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+    <div class="card p-5 mb-4">
+      <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
         <span>🏆</span>
         전체 기록
       </h3>
@@ -81,8 +89,8 @@
     </div>
 
     <!-- 데이터 관리 -->
-    <div class="card p-6">
-      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+    <div class="card p-5">
+      <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
         <span>⚙️</span>
         데이터 관리
       </h3>
@@ -111,17 +119,28 @@
       </div>
 
       <p class="text-xs text-gray-500 mt-4 text-center">
-        저장 용량: {{ storageInfo.used }} / {{ storageInfo.total }}
+        저장 용량: {{ storageInfo.usedKB }}KB 사용 ({{ storageInfo.usagePercent }}%)
       </p>
     </div>
+
+    <!-- 주간 회고 모달 -->
+    <WeeklyReflectionModal
+      :show="showWeeklyReflection"
+      @complete="handleReflectionComplete"
+      @close="showWeeklyReflection = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuestStore } from '@/stores/quest'
+import WeeklyReflectionModal from '@/components/reflection/WeeklyReflectionModal.vue'
 
 const questStore = useQuestStore()
+
+// 모달 상태
+const showWeeklyReflection = ref(false)
 
 // 주간 통계
 const weeklyStats = computed(() => questStore.getWeeklyStats())
@@ -184,6 +203,12 @@ function resetData() {
       location.reload()
     }
   }
+}
+
+// 주간 회고 완료 핸들러
+function handleReflectionComplete(data) {
+  console.log('주간 회고가 완료되었습니다:', data)
+  alert('✅ 주간 회고가 저장되었습니다!')
 }
 
 // onMounted에서 loadData()를 호출하지 않음

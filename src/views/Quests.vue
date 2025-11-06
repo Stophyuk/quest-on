@@ -2,8 +2,14 @@
   <div class="min-h-screen bg-gradient-to-b from-purple-50 to-white pb-24">
     <!-- 헤더 -->
     <div class="bg-white shadow-sm sticky top-0 z-10">
-      <div class="max-w-md mx-auto px-4 py-4">
+      <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-neutral-800">퀘스트 관리</h1>
+        <router-link
+          to="/"
+          class="text-sm text-purple-600 hover:text-purple-700 font-medium"
+        >
+          ← 홈으로
+        </router-link>
       </div>
     </div>
 

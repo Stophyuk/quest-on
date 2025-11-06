@@ -8,22 +8,24 @@
           v-for="item in navItems"
           :key="item.name"
           :to="item.path"
-          class="flex flex-col items-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1"
+          class="flex flex-col items-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1 relative"
           :class="getNavItemClasses(item.name)"
         >
+          <!-- 활성 탭 상단 인디케이터 -->
+          <div
+            v-if="$route.name === item.name"
+            class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-1 rounded-full transition-all duration-300"
+            :class="getIndicatorClasses(item.name)"
+          ></div>
+
           <!-- 아이콘 배경 -->
           <div class="relative mb-1">
             <div
-              class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300"
+              class="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300"
               :class="getIconBackgroundClasses(item.name)"
             >
-              <span class="text-lg">{{ item.icon }}</span>
+              <span class="text-xl transition-transform" :class="$route.name === item.name ? 'scale-110' : ''">{{ item.icon }}</span>
             </div>
-            <!-- 활성화 상태 표시점 -->
-            <div
-              v-if="$route.name === item.name"
-              class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white animate-pulse"
-            ></div>
           </div>
 
           <!-- 라벨 -->
@@ -46,8 +48,10 @@ const route = useRoute()
 
 const navItems = [
   { name: 'Home', path: '/', icon: '🏠', label: '홈', color: 'blue' },
+  { name: 'Vision', path: '/vision', icon: '🌟', label: '비전', color: 'pink' },
+  { name: 'Roadmap', path: '/roadmap', icon: '🗺️', label: '로드맵', color: 'orange' },
   { name: 'Quests', path: '/quests', icon: '🎯', label: '퀘스트', color: 'purple' },
-  { name: 'Profile', path: '/profile', icon: '👤', label: '프로필', color: 'green' }
+  { name: 'Profile', path: '/profile', icon: '👤', label: '통계', color: 'green' }
 ]
 
 // 네비게이션 아이템 클래스
@@ -67,6 +71,7 @@ function getIconBackgroundClasses(itemName) {
       blue: 'bg-blue-100 border border-blue-200',
       purple: 'bg-purple-100 border border-purple-200',
       pink: 'bg-pink-100 border border-pink-200',
+      orange: 'bg-orange-100 border border-orange-200',
       green: 'bg-green-100 border border-green-200'
     }
     return activeClasses[color] || activeClasses.gray
@@ -86,11 +91,27 @@ function getLabelClasses(itemName) {
       blue: 'text-blue-700 font-semibold',
       purple: 'text-purple-700 font-semibold',
       pink: 'text-pink-700 font-semibold',
+      orange: 'text-orange-700 font-semibold',
       green: 'text-green-700 font-semibold'
     }
     return activeClasses[color] || 'text-gray-700 font-semibold'
   }
 
   return 'text-gray-500'
+}
+
+// 상단 인디케이터 클래스
+function getIndicatorClasses(itemName) {
+  const item = navItems.find(nav => nav.name === itemName)
+  const color = item?.color || 'gray'
+
+  const indicatorClasses = {
+    blue: 'bg-gradient-to-r from-blue-400 to-blue-600',
+    purple: 'bg-gradient-to-r from-purple-400 to-purple-600',
+    pink: 'bg-gradient-to-r from-pink-400 to-pink-600',
+    orange: 'bg-gradient-to-r from-orange-400 to-orange-600',
+    green: 'bg-gradient-to-r from-green-400 to-green-600'
+  }
+  return indicatorClasses[color] || 'bg-gray-600'
 }
 </script>

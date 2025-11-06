@@ -10,6 +10,24 @@ export const useQuestStore = defineStore('quest', () => {
   const quests = ref([])
   const isLoaded = ref(false)
 
+  // ==================== Vision 2.0 상태 ====================
+  const visionProfile = ref({
+    values: [],
+    currentIdentity: '',
+    futureIdentity: '',
+    lifeDream: '',
+    concerns: '',
+    yearGoals: [],
+    currentRoutine: '',
+    availableTime: 2,
+    learningStyle: '',
+    motivation: ''
+  })
+  const visionNote = ref('')
+  const goalTree = ref([])
+  const weeklyReflections = ref([])
+  const currentWeekGoal = ref(null) // 현재 주차 목표
+
   // ==================== 난이도별 경험치 ====================
   const DIFFICULTY_XP = {
     easy: 10,
@@ -204,13 +222,21 @@ export const useQuestStore = defineStore('quest', () => {
     }
 
     const dataToSave = {
-      version: '1.0.0',
+      version: '2.0.0', // Vision 2.0
       user: {
         level: level.value,
         experience: experience.value,
         totalCompleted: totalCompleted.value
       },
-      quests: quests.value
+      quests: quests.value,
+      // Vision 2.0 데이터
+      vision: {
+        profile: visionProfile.value,
+        note: visionNote.value,
+        goalTree: goalTree.value,
+        currentWeekGoal: currentWeekGoal.value,
+        reflections: weeklyReflections.value
+      }
     }
 
     storageManager.saveQuestData(dataToSave)
@@ -222,8 +248,8 @@ export const useQuestStore = defineStore('quest', () => {
     const savedData = storageManager.loadQuestData()
 
     if (savedData) {
-      // 버전 확인 (향후 마이그레이션 대비)
-      if (savedData.version === '1.0.0' && savedData.user) {
+      // 사용자 데이터 로드
+      if (savedData.user) {
         level.value = savedData.user.level || 0
         experience.value = savedData.user.experience || 0
         totalCompleted.value = savedData.user.totalCompleted || 0
@@ -234,8 +260,28 @@ export const useQuestStore = defineStore('quest', () => {
         totalCompleted.value = savedData.totalCompleted || 0
       }
 
+      // 퀘스트 데이터 로드
       if (savedData.quests && savedData.quests.length > 0) {
         quests.value = savedData.quests
+      }
+
+      // Vision 2.0 데이터 로드
+      if (savedData.version === '2.0.0' && savedData.vision) {
+        if (savedData.vision.profile) {
+          visionProfile.value = savedData.vision.profile
+        }
+        if (savedData.vision.note) {
+          visionNote.value = savedData.vision.note
+        }
+        if (savedData.vision.goalTree) {
+          goalTree.value = savedData.vision.goalTree
+        }
+        if (savedData.vision.currentWeekGoal) {
+          currentWeekGoal.value = savedData.vision.currentWeekGoal
+        }
+        if (savedData.vision.reflections) {
+          weeklyReflections.value = savedData.vision.reflections
+        }
       }
     }
 
@@ -270,16 +316,89 @@ export const useQuestStore = defineStore('quest', () => {
       return completedDate >= weekAgo && completedDate <= now
     })
 
-    return {
+    const stats = {
       totalCompleted: weeklyCompleted.length,
-      byDifficulty: {
-        easy: weeklyCompleted.filter(q => q.difficulty === 'easy').length,
-        normal: weeklyCompleted.filter(q => q.difficulty === 'normal').length,
-        hard: weeklyCompleted.filter(q => q.difficulty === 'hard').length
-      },
-      totalXP: weeklyCompleted.reduce((sum, q) => sum + (DIFFICULTY_XP[q.difficulty] || 0), 0)
+      easy: weeklyCompleted.filter(q => q.difficulty === 'easy').length,
+      normal: weeklyCompleted.filter(q => q.difficulty === 'normal').length,
+      hard: weeklyCompleted.filter(q => q.difficulty === 'hard').length,
+      totalXP: weeklyCompleted.reduce((sum, q) => sum + (DIFFICULTY_XP[q.difficulty] || 0), 0),
+      completionRate: 0
     }
+
+    // 완료율 계산 (이번 주에 추가된 퀘스트 대비)
+    const weeklyTotal = quests.value.filter(q => {
+      if (!q.createdAt) return false
+      const createdDate = new Date(q.createdAt)
+      return createdDate >= weekAgo && createdDate <= now
+    }).length
+
+    if (weeklyTotal > 0) {
+      stats.completionRate = Math.round((stats.totalCompleted / weeklyTotal) * 100)
+    }
+
+    return stats
   }
+
+  // ==================== Vision 2.0 함수 ====================
+
+  // 비전 프로필 설정
+  function setVisionProfile(profile) {
+    visionProfile.value = { ...visionProfile.value, ...profile }
+    saveData()
+  }
+
+  // 비전 노트 설정
+  function setVisionNote(note) {
+    visionNote.value = note
+    saveData()
+  }
+
+  // 목표 트리 설정
+  function setGoalTree(tree) {
+    goalTree.value = tree
+    saveData()
+  }
+
+  // 현재 주차 목표 설정
+  function setCurrentWeekGoal(goal) {
+    currentWeekGoal.value = goal
+    saveData()
+  }
+
+  // 주간 회고 추가
+  function addWeeklyReflection(reflection) {
+    const newReflection = {
+      id: Date.now(),
+      weekOf: getWeekIdentifier(),
+      createdAt: new Date().toISOString(),
+      ...reflection
+    }
+    weeklyReflections.value.unshift(newReflection) // 최신 항목이 앞으로
+    saveData()
+    return newReflection
+  }
+
+  // 주차 식별자 생성 (YYYY-WXX 형식)
+  function getWeekIdentifier() {
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const days = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000))
+    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7)
+    return `${now.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`
+  }
+
+  // Vision 완료 여부 확인
+  const hasVisionProfile = computed(() => {
+    return visionProfile.value.yearGoals.length > 0
+  })
+
+  const hasVisionNote = computed(() => {
+    return visionNote.value.length > 0
+  })
+
+  const hasGoalTree = computed(() => {
+    return goalTree.value.length > 0
+  })
 
   // ==================== 반복 퀘스트 자정 리셋 ====================
   function resetDailyQuests() {
@@ -343,6 +462,13 @@ export const useQuestStore = defineStore('quest', () => {
     quests,
     isLoaded,
 
+    // Vision 2.0 상태
+    visionProfile,
+    visionNote,
+    goalTree,
+    weeklyReflections,
+    currentWeekGoal,
+
     // 계산된 값
     experienceToNextLevel,
     progressPercentage,
@@ -354,6 +480,9 @@ export const useQuestStore = defineStore('quest', () => {
     characterStage,
     characterSizeClass,
     characterEffect,
+    hasVisionProfile,
+    hasVisionNote,
+    hasGoalTree,
 
     // 함수
     addQuest,
@@ -367,6 +496,14 @@ export const useQuestStore = defineStore('quest', () => {
     importData,
     getStorageInfo,
     getWeeklyStats,
+
+    // Vision 2.0 함수
+    setVisionProfile,
+    setVisionNote,
+    setGoalTree,
+    setCurrentWeekGoal,
+    addWeeklyReflection,
+    getWeekIdentifier,
 
     // 상수
     DIFFICULTY_XP

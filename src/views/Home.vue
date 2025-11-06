@@ -27,9 +27,18 @@
     <div class="card p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-900">오늘의 퀘스트</h3>
-        <span class="text-sm text-gray-500">
-          {{ completedCount }} / {{ totalCount }} 완료
-        </span>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="hasGoalTree"
+            @click="showQuestSuggester = true"
+            class="text-xs px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg font-medium hover:shadow-md transition-all"
+          >
+            🤖 AI 추천
+          </button>
+          <span class="text-sm text-gray-500">
+            {{ completedCount }} / {{ totalCount }} 완료
+          </span>
+        </div>
       </div>
 
       <!-- 빈 상태 -->
@@ -97,6 +106,13 @@
 
     <!-- 퀘스트 추가 모달 -->
     <QuestModal v-if="showQuestModal" @close="showQuestModal = false" />
+
+    <!-- AI 퀘스트 추천 모달 -->
+    <DailyQuestSuggester
+      :show="showQuestSuggester"
+      @complete="handleQuestSuggestComplete"
+      @close="showQuestSuggester = false"
+    />
   </div>
 </template>
 
@@ -106,18 +122,23 @@ import { useQuestStore } from '@/stores/quest'
 import PlayerCard from '@/components/quest/PlayerCard.vue'
 import QuestModal from '@/components/quest/QuestModal.vue'
 import LevelUpModal from '@/components/quest/LevelUpModal.vue'
+import DailyQuestSuggester from '@/components/quest/DailyQuestSuggester.vue'
 
 const questStore = useQuestStore()
 
 // 모달 상태
 const showQuestModal = ref(false)
 const showLevelUpModal = ref(false)
+const showQuestSuggester = ref(false)
 const levelUpData = ref(null)
 
 // 퀘스트 데이터
 const quests = computed(() => questStore.quests)
 const completedCount = computed(() => questStore.completedQuests.length)
 const totalCount = computed(() => quests.value.length)
+
+// 목표 트리 존재 여부
+const hasGoalTree = computed(() => questStore.hasGoalTree)
 
 // 난이도 라벨
 function getDifficultyLabel(difficulty) {
@@ -164,6 +185,11 @@ function removeQuest(questId) {
   if (confirm('이 퀘스트를 삭제하시겠습니까?')) {
     questStore.removeQuest(questId)
   }
+}
+
+// AI 퀘스트 추천 완료 핸들러
+function handleQuestSuggestComplete(quests) {
+  console.log('AI가 추천한 퀘스트가 추가되었습니다:', quests)
 }
 
 // FloatingAddButton 이벤트 리스너
