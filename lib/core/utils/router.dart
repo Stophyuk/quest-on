@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/screens/auth/login_screen.dart';
 import 'package:quest_on/presentation/screens/auth/signup_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_survey_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_coaching_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_roadmap_screen.dart';
 
 /// GoRouter 설정
 final routerProvider = Provider<GoRouter>((ref) {
@@ -40,6 +43,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+
+      // 비전 설문
+      GoRoute(
+        path: '/vision/survey',
+        builder: (context, state) => const VisionSurveyScreen(),
+      ),
+
+      // AI 코칭 생성
+      GoRoute(
+        path: '/vision/coaching',
+        builder: (context, state) => const VisionCoachingScreen(),
+      ),
+
+      // 로드맵 생성
+      GoRoute(
+        path: '/vision/roadmap',
+        builder: (context, state) => const VisionRoadmapScreen(),
       ),
 
       // 홈 (임시)
@@ -99,7 +120,18 @@ class _TempHomeScreen extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 32),
-              const Text('다음 단계: 비전 설문 및 퀘스트 시스템 구현'),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.go('/vision/survey');
+                },
+                icon: const Icon(Icons.rocket_launch),
+                label: const Text('비전 설문 시작하기'),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '목표 설정부터 시작해보세요!',
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
           ),
           loading: () => const CircularProgressIndicator(),
