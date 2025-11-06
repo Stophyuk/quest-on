@@ -63,7 +63,7 @@ class AppTheme {
       ),
 
       // Card 테마
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: AppConstants.cardElevation,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
@@ -72,14 +72,14 @@ class AppTheme {
       ),
 
       // FloatingActionButton 테마
-      floatingActionButtonTheme: const FloatingActionButtonTheme(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 4,
       ),
 
       // BottomNavigationBar 테마
-      bottomNavigationBarTheme: const BottomNavigationBarTheme(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surfaceColor,
         selectedItemColor: primaryColor,
         unselectedItemColor: textSecondary,
@@ -90,7 +90,7 @@ class AppTheme {
       // Chip 테마
       chipTheme: ChipThemeData(
         backgroundColor: backgroundColor,
-        selectedColor: primaryColor.withOpacity(0.2),
+        selectedColor: primaryColor.withValues(alpha: 0.2),
         labelStyle: const TextStyle(color: textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
