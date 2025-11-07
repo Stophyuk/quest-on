@@ -5,6 +5,7 @@ import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/screens/auth/signup_screen.dart';
+import 'package:quest_on/presentation/widgets/error_view.dart';
 
 /// 로그인 화면
 class LoginScreen extends ConsumerStatefulWidget {
@@ -55,16 +56,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // "Exception: " 접두사 제거
-        String errorMessage = e.toString();
-        if (errorMessage.startsWith('Exception: ')) {
-          errorMessage = errorMessage.substring(11);
-        }
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text(ErrorView.getFriendlyMessage(e)),
             backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

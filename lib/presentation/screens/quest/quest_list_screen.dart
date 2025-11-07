@@ -8,6 +8,8 @@ import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 import 'package:quest_on/presentation/widgets/player_card.dart';
+import 'package:quest_on/presentation/widgets/error_view.dart';
+import 'package:quest_on/presentation/widgets/loading_view.dart';
 
 /// 퀘스트 목록 화면 (홈 화면)
 class QuestListScreen extends ConsumerStatefulWidget {
@@ -93,7 +95,10 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     return authStateAsync.when(
         data: (user) {
           if (user == null) {
-            return const Center(child: Text('로그인이 필요합니다'));
+            return const ErrorView(
+              message: '로그인이 필요합니다',
+              icon: Icons.lock_outline,
+            );
           }
 
           // 퀘스트 로드 (한 번만)
@@ -129,19 +134,27 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
                     }
                     return _buildQuestList(quests);
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (error, stack) => Center(
-                    child: Text('오류: $error'),
+                  loading: () => const SkeletonList(itemCount: 3),
+                  error: (error, stack) => ErrorView(
+                    message: ErrorView.getFriendlyMessage(error),
+                    onRetry: () {
+                      if (user != null) {
+                        ref.read(questNotifierProvider.notifier).loadQuests(user.id);
+                      }
+                    },
                   ),
                 ),
               ),
             ],
           );
         },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('오류: $error')),
+      loading: () => const LoadingView(message: '사용자 정보 확인 중...'),
+      error: (error, stack) => ErrorView(
+        message: ErrorView.getFriendlyMessage(error),
+        onRetry: () {
+          ref.invalidate(authStateProvider);
+        },
+      ),
     );
   }
 

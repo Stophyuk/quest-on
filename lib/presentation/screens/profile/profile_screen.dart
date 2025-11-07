@@ -6,6 +6,8 @@ import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
+import 'package:quest_on/presentation/widgets/error_view.dart';
+import 'package:quest_on/presentation/widgets/loading_view.dart';
 
 /// 프로필 화면
 class ProfileScreen extends ConsumerWidget {
@@ -94,17 +96,17 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 );
               },
-              loading: () => const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(AppConstants.spacing * 2),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (error, stack) => Card(
+              loading: () => Card(
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spacing * 2),
-                  child: Text('오류: $error'),
+                  child: const LoadingView(message: '사용자 정보 로딩 중...'),
                 ),
+              ),
+              error: (error, stack) => ErrorCard(
+                message: ErrorView.getFriendlyMessage(error),
+                onRetry: () {
+                  ref.invalidate(userStatsStreamProvider(user.id));
+                },
               ),
             ),
             const SizedBox(height: 24),
@@ -130,8 +132,13 @@ class ProfileScreen extends ConsumerWidget {
                         '$count개',
                         Icons.check_circle,
                       ),
-                      loading: () => const CircularProgressIndicator(),
-                      error: (_, __) => const Text('통계를 불러올 수 없습니다'),
+                      loading: () => const SmallLoadingIndicator(),
+                      error: (error, __) => ErrorCard(
+                        message: ErrorView.getFriendlyMessage(error),
+                        onRetry: () {
+                          ref.invalidate(todayCompletedCountProvider(user.id));
+                        },
+                      ),
                     ),
                   ],
                 ),
