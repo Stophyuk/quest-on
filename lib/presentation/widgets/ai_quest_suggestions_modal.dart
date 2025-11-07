@@ -207,7 +207,7 @@ class AiQuestSuggestionsModal extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.backgroundLight,
+                    color: AppTheme.backgroundColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -294,15 +294,21 @@ class AiQuestSuggestionsModal extends StatelessWidget {
   QuestCategory _parseCategory(String category) {
     switch (category) {
       case '생산성':
-        return QuestCategory.productivity;
+      case '업무':
+        return QuestCategory.work;
       case '학습':
-        return QuestCategory.learning;
+      case '공부':
+        return QuestCategory.study;
       case '건강':
         return QuestCategory.health;
       case '관계':
         return QuestCategory.relationship;
+      case '취미':
+        return QuestCategory.hobby;
+      case '성장':
+        return QuestCategory.growth;
       default:
-        return QuestCategory.productivity;
+        return QuestCategory.other;
     }
   }
 
