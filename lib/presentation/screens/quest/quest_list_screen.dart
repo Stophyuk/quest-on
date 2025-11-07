@@ -10,6 +10,8 @@ import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 import 'package:quest_on/presentation/widgets/player_card.dart';
 import 'package:quest_on/presentation/widgets/error_view.dart';
 import 'package:quest_on/presentation/widgets/loading_view.dart';
+import 'package:quest_on/presentation/widgets/ai_quest_suggestions_modal.dart';
+import 'package:quest_on/data/datasources/remote/ai_remote_datasource.dart';
 
 /// 퀘스트 목록 화면 (홈 화면)
 class QuestListScreen extends ConsumerStatefulWidget {
@@ -22,6 +24,8 @@ class QuestListScreen extends ConsumerStatefulWidget {
 class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   QuestCondition _selectedCondition = QuestCondition.normal;
   bool _hasLoadedQuests = false;
+  bool _isLoadingAiSuggestions = false;
+  final AiRemoteDataSource _aiDataSource = AiRemoteDataSource();
 
   @override
   void initState() {
@@ -87,6 +91,105 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     }
   }
 
+  Future<void> _onAiSuggestTap() async {
+    setState(() => _isLoadingAiSuggestions = true);
+
+    try {
+      // AI 추천 받기
+      final result = await _aiDataSource.getSuggestedQuests(
+        currentWeekGoal: '이번 주 목표 달성하기',  // TODO: 실제 주차 목표 가져오기
+        condition: _selectedCondition.label,
+      );
+
+      if (!mounted) return;
+
+      final suggestions = result['suggestions'] as List<dynamic>?;
+      if (suggestions == null || suggestions.isEmpty) {
+        throw Exception('AI 추천 결과가 없습니다');
+      }
+
+      // 모달로 결과 표시
+      await AiQuestSuggestionsModal.show(
+        context: context,
+        suggestions: suggestions.cast<Map<String, dynamic>>(),
+        onQuestSelect: (suggestion) async {
+          // 퀘스트 추가
+          try {
+            await ref.read(questNotifierProvider.notifier).createQuest(
+                  title: suggestion['title'] ?? '',
+                  category: _parseCategory(suggestion['category'] ?? '생산성'),
+                  difficulty: _parseDifficulty(suggestion['difficulty'] ?? 'normal'),
+                  targetCount: 1,
+                  description: suggestion['reason'],
+                );
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('퀘스트가 추가되었습니다'),
+                  backgroundColor: AppTheme.successColor,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(ErrorView.getFriendlyMessage(e)),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            }
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorView.getFriendlyMessage(e)),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingAiSuggestions = false);
+      }
+    }
+  }
+
+  QuestCategory _parseCategory(String category) {
+    switch (category) {
+      case '생산성':
+        return QuestCategory.productivity;
+      case '학습':
+        return QuestCategory.learning;
+      case '건강':
+        return QuestCategory.health;
+      case '관계':
+        return QuestCategory.relationship;
+      default:
+        return QuestCategory.productivity;
+    }
+  }
+
+  QuestDifficulty _parseDifficulty(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return QuestDifficulty.easy;
+      case 'normal':
+        return QuestDifficulty.normal;
+      case 'hard':
+        return QuestDifficulty.hard;
+      case 'veryhard':
+      case 'very_hard':
+        return QuestDifficulty.veryHard;
+      default:
+        return QuestDifficulty.normal;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authStateAsync = ref.watch(authStateProvider);
@@ -124,6 +227,9 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
 
               // 오늘 완료 통계
               _buildTodayStats(user.id),
+
+              // AI 추천 버튼
+              _buildAiSuggestionButton(),
 
               // 퀘스트 목록
               Expanded(
@@ -242,6 +348,32 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  /// AI 추천 버튼
+  Widget _buildAiSuggestionButton() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.spacing * 2,
+        vertical: AppConstants.spacing,
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _isLoadingAiSuggestions ? null : _onAiSuggestTap,
+        icon: _isLoadingAiSuggestions
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.auto_awesome),
+        label: Text(_isLoadingAiSuggestions ? 'AI 분석 중...' : 'AI 퀘스트 추천'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          backgroundColor: AppTheme.secondaryColor,
+          foregroundColor: Colors.white,
+        ),
+      ),
     );
   }
 
