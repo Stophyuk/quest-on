@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
@@ -124,7 +125,7 @@ class _VisionSurveyScreenState extends ConsumerState<VisionSurveyScreen> {
         );
 
         // AI 코칭 생성 화면으로 이동
-        Navigator.of(context).pushReplacementNamed('/vision/coaching');
+        context.go('/vision/coaching');
       }
     } catch (e) {
       if (mounted) {

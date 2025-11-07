@@ -2,7 +2,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 serve(async (req) => {
   // CORS 헤더
@@ -25,21 +25,23 @@ serve(async (req) => {
       throw new Error("필수 파라미터가 누락되었습니다");
     }
 
-    // Claude API 호출
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // OpenAI API 호출
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1024,
+        model: "gpt-4o-mini",
         messages: [
           {
+            role: "system",
+            content: "당신은 전문 라이프 코치입니다. 사용자의 가치관과 목표를 바탕으로 동기부여가 되는 비전 노트를 작성합니다.",
+          },
+          {
             role: "user",
-            content: `당신은 전문 라이프 코치입니다. 다음 정보를 바탕으로 ${name}님을 위한 맞춤형 비전 노트를 작성해주세요.
+            content: `다음 정보를 바탕으로 ${name}님을 위한 맞춤형 비전 노트를 작성해주세요.
 
 **가치관**: ${values.join(", ")}
 **목표**: ${goal}
@@ -54,15 +56,18 @@ serve(async (req) => {
 총 200-300자 이내로 간결하고 동기부여가 되도록 작성해주세요.`,
           },
         ],
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Claude API 오류: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(`OpenAI API 오류: ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
-    const visionNote = data.content[0].text;
+    const visionNote = data.choices[0].message.content;
 
     return new Response(
       JSON.stringify({ visionNote }),

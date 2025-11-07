@@ -3,6 +3,7 @@ import 'package:quest_on/domain/entities/user.dart';
 import 'package:quest_on/domain/repositories/auth_repository.dart';
 import 'package:quest_on/data/repositories/auth_repository_impl.dart';
 import 'package:quest_on/data/datasources/remote/auth_remote_datasource.dart';
+import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 
 // Provider: AuthRemoteDataSource
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -25,14 +26,19 @@ final authStateProvider = StreamProvider<User?>((ref) {
 // StateNotifierProvider: 인증 상태 관리
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-  return AuthNotifier(ref.read(authRepositoryProvider));
+  return AuthNotifier(
+    ref.read(authRepositoryProvider),
+    ref,
+  );
 });
 
 /// 인증 상태 관리 Notifier
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   final AuthRepository _authRepository;
+  final Ref _ref;
 
-  AuthNotifier(this._authRepository) : super(const AsyncValue.loading()) {
+  AuthNotifier(this._authRepository, this._ref)
+      : super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -41,6 +47,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     try {
       final user = await _authRepository.getCurrentUser();
       state = AsyncValue.data(user);
+
+      // 앱 재시작 시 로그인된 사용자가 있으면 UserStats 로드
+      if (user != null) {
+        _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
+      }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -58,6 +69,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         password: password,
       );
       state = AsyncValue.data(user);
+
+      // 로그인 성공 시 UserStats 로드
+      if (user != null) {
+        _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
+      }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -65,7 +81,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   /// 이메일/비밀번호로 회원가입
-  Future<void> signUpWithEmail({
+  /// 회원가입 성공 후 자동 로그인됨 (Supabase 기본 동작)
+  /// Router가 UserStats 존재 여부를 확인하여 온보딩으로 리다이렉트
+  Future<String> signUpWithEmail({
     required String email,
     required String password,
     String? name,
@@ -77,7 +95,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         password: password,
         name: name,
       );
+
+      // 로그인된 상태로 설정 (Supabase가 자동으로 session 생성)
       state = AsyncValue.data(user);
+
+      // 회원가입 성공 시 UserStats 로드
+      _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
+
+      return user.id; // user ID 반환 (온보딩에서 사용)
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;

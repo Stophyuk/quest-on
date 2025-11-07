@@ -6,6 +6,8 @@ import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
+import 'package:quest_on/presentation/providers/user_stats_provider.dart';
+import 'package:quest_on/presentation/widgets/player_card.dart';
 
 /// 퀘스트 목록 화면 (홈 화면)
 class QuestListScreen extends ConsumerStatefulWidget {
@@ -17,17 +19,12 @@ class QuestListScreen extends ConsumerStatefulWidget {
 
 class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   QuestCondition _selectedCondition = QuestCondition.normal;
+  bool _hasLoadedQuests = false;
 
   @override
   void initState() {
     super.initState();
-    // 퀘스트 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(authStateProvider).value;
-      if (user != null) {
-        ref.read(questNotifierProvider.notifier).loadQuests(user.id);
-      }
-    });
+    // 퀘스트 로드는 build에서 authState를 listen하여 처리
   }
 
   Future<void> _onConditionChanged(QuestCondition newCondition) async {
@@ -93,32 +90,30 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     final authStateAsync = ref.watch(authStateProvider);
     final questsAsync = ref.watch(questNotifierProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('QUEST ON'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              // TODO: 프로필 화면으로 이동
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
-            },
-          ),
-        ],
-      ),
-      body: authStateAsync.when(
+    return authStateAsync.when(
         data: (user) {
           if (user == null) {
             return const Center(child: Text('로그인이 필요합니다'));
           }
 
+          // 퀘스트 로드 (한 번만)
+          if (!_hasLoadedQuests && mounted) {
+            _hasLoadedQuests = true;
+            Future.microtask(() {
+              if (mounted) {
+                ref.read(questNotifierProvider.notifier).loadQuests(user.id);
+              }
+            });
+          }
+
           return Column(
             children: [
+              // 플레이어 카드
+              Padding(
+                padding: const EdgeInsets.all(AppConstants.spacing * 2),
+                child: const PlayerCard(),
+              ),
+
               // 컨디션 선택기
               _buildConditionSelector(),
 
@@ -145,15 +140,8 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('오류: $error')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/quest/add');
-        },
-        child: const Icon(Icons.add),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('오류: $error')),
     );
   }
 

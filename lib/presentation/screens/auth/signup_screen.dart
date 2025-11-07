@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
@@ -58,13 +59,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('회원가입이 완료되었습니다!'),
+          SnackBar(
+            content: const Text('회원가입이 완료되었습니다!'),
             backgroundColor: AppTheme.successColor,
+            duration: const Duration(seconds: 3),
           ),
         );
-        // 로그인 화면으로 돌아가기
-        Navigator.of(context).pop();
+        // Router의 redirect 로직이 자동으로 적절한 화면으로 이동시킵니다
+        // (UserStats 로드 상태에 따라 /onboarding으로 이동)
       }
     } catch (e) {
       if (mounted) {
@@ -235,7 +237,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                           );
                         },
-                        child: const Text('보기'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          '보기',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
                     ],
                   ),

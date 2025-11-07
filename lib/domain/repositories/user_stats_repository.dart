@@ -8,6 +8,13 @@ abstract class UserStatsRepository {
   /// 사용자 통계 생성 (초기화)
   Future<UserStats> createUserStats(String userId);
 
+  /// 사용자 통계 생성 (온보딩용 - 닉네임/캐릭터 포함)
+  Future<UserStats> createUserStatsWithProfile({
+    required String userId,
+    required String nickname,
+    required String character,
+  });
+
   /// 경험치 추가
   Future<UserStats> addExp({
     required String userId,

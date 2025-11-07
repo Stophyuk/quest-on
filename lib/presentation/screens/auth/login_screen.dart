@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
@@ -33,19 +34,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      print('로그인 시도: ${_emailController.text.trim()}');
       await ref.read(authNotifierProvider.notifier).signInWithEmail(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
 
+      print('✅ 로그인 성공! Router의 자동 리다이렉트가 처리합니다.');
+
       if (mounted) {
-        // 로그인 성공 - 홈 화면으로 이동 (라우터 설정 후 구현)
+        // 로그인 성공 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('로그인되었습니다!'),
             backgroundColor: AppTheme.successColor,
           ),
         );
+        // Router의 redirect 로직이 자동으로 적절한 화면으로 이동시킵니다
+        // (UserStats 로드 상태에 따라 /onboarding 또는 / 로 이동)
       }
     } catch (e) {
       if (mounted) {

@@ -5,42 +5,43 @@ import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/presentation/providers/vision_provider.dart';
 
-/// AI 코칭 생성 화면
-class VisionCoachingScreen extends ConsumerStatefulWidget {
-  const VisionCoachingScreen({super.key});
+/// 로드맵 생성 화면 (자동 생성 및 표시)
+class VisionRoadmapGeneratorScreen extends ConsumerStatefulWidget {
+  const VisionRoadmapGeneratorScreen({super.key});
 
   @override
-  ConsumerState<VisionCoachingScreen> createState() =>
-      _VisionCoachingScreenState();
+  ConsumerState<VisionRoadmapGeneratorScreen> createState() =>
+      _VisionRoadmapGeneratorScreenState();
 }
 
-class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
+class _VisionRoadmapGeneratorScreenState
+    extends ConsumerState<VisionRoadmapGeneratorScreen> {
   bool _isGenerating = false;
-  String? _visionNote;
+  Map<String, dynamic>? _goalTree;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    // 화면 로드 시 자동으로 AI 코칭 생성 시작
+    // 화면 로드 시 자동으로 로드맵 생성 시작
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _generateVisionNote();
+      _generateGoalTree();
     });
   }
 
-  Future<void> _generateVisionNote() async {
+  Future<void> _generateGoalTree() async {
     setState(() {
       _isGenerating = true;
       _error = null;
     });
 
     try {
-      final visionNote =
-          await ref.read(visionNotifierProvider.notifier).generateVisionNote();
+      final goalTree =
+          await ref.read(visionNotifierProvider.notifier).generateGoalTree();
 
       if (mounted) {
         setState(() {
-          _visionNote = visionNote;
+          _goalTree = goalTree;
           _isGenerating = false;
         });
       }
@@ -54,15 +55,15 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
     }
   }
 
-  void _goToRoadmap() {
-    context.go('/vision/roadmap');
+  void _complete() {
+    context.go('/');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI 코칭'),
+        title: const Text('실행 로드맵'),
       ),
       body: SafeArea(
         child: _buildBody(),
@@ -79,7 +80,7 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
       return _buildError();
     }
 
-    if (_visionNote != null) {
+    if (_goalTree != null) {
       return _buildSuccess();
     }
 
@@ -102,7 +103,7 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
           ),
           const SizedBox(height: 32),
           Text(
-            'AI가 당신만의 코칭을 작성하고 있습니다...',
+            'AI가 실행 로드맵을 작성하고 있습니다...',
             style: Theme.of(context).textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
@@ -110,7 +111,7 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              '당신의 가치관과 목표를 분석하여\n맞춤형 코칭을 제공합니다',
+              '목표 달성을 위한 구체적인\n단계별 실행 계획을 생성합니다',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -154,7 +155,7 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: _generateVisionNote,
+              onPressed: _generateGoalTree,
               icon: const Icon(Icons.refresh),
               label: const Text('다시 시도'),
             ),
@@ -165,6 +166,8 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
   }
 
   Widget _buildSuccess() {
+    final milestones = _goalTree!['milestones'] as List<dynamic>? ?? [];
+
     return Column(
       children: [
         Expanded(
@@ -179,12 +182,12 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        color: AppTheme.secondaryColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.auto_awesome,
-                        color: AppTheme.primaryColor,
+                        Icons.map_outlined,
+                        color: AppTheme.secondaryColor,
                         size: 32,
                       ),
                     ),
@@ -194,12 +197,12 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI 코칭',
+                            '실행 로드맵',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '당신만을 위한 맞춤 코칭',
+                            '목표 달성을 위한 단계별 계획',
                             style:
                                 Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: AppTheme.textSecondary,
@@ -212,48 +215,52 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // 코칭 내용
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceColor,
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      width: 2,
-                    ),
+                // 마일스톤 리스트
+                if (milestones.isEmpty)
+                  const Center(
+                    child: Text('로드맵 데이터가 없습니다'),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: milestones.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final milestone = milestones[index] as Map<String, dynamic>;
+                      return _buildMilestoneCard(
+                        index + 1,
+                        milestone['title'] as String? ?? '',
+                        milestone['description'] as String? ?? '',
+                        milestone['duration'] as String? ?? '',
+                      );
+                    },
                   ),
-                  child: Text(
-                    _visionNote!.replaceAll('\\n', '\n'),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          height: 1.6,
-                        ),
-                  ),
-                ),
                 const SizedBox(height: 24),
 
-                // 안내 메시지
+                // 완료 메시지
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                    color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.lightbulb_outline,
-                        color: AppTheme.primaryColor,
-                        size: 20,
+                        Icons.check_circle_outline,
+                        color: AppTheme.successColor,
+                        size: 24,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '이 코칭을 바탕으로 구체적인 실행 로드맵을 생성합니다',
+                          '이제 퀘스트를 시작할 준비가 되었습니다!',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.primaryColor,
+                                    color: AppTheme.successColor,
+                                    fontWeight: FontWeight.w600,
                                   ),
                         ),
                       ),
@@ -271,19 +278,113 @@ class _VisionCoachingScreenState extends ConsumerState<VisionCoachingScreen> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _goToRoadmap,
-              icon: const Icon(Icons.arrow_forward),
+              onPressed: _complete,
+              icon: const Icon(Icons.check),
               label: const Text(
-                '로드맵 생성하기',
+                '시작하기',
                 style: TextStyle(fontSize: 16),
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: AppTheme.successColor,
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMilestoneCard(
+    int step,
+    String title,
+    String description,
+    String duration,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        border: Border.all(
+          color: AppTheme.secondaryColor.withOpacity(0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // 단계 번호
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryColor,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Center(
+                  child: Text(
+                    '$step',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 제목
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              description.replaceAll('\\n', '\n'),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                    height: 1.5,
+                  ),
+            ),
+          ],
+          if (duration.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(
+                  Icons.schedule,
+                  size: 16,
+                  color: AppTheme.secondaryColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  duration,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.secondaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

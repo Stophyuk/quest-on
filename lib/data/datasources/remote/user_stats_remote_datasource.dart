@@ -28,11 +28,12 @@ class UserStatsRemoteDataSource {
   }
 
   /// 사용자 통계 생성 (초기화)
+  /// upsert를 사용하여 중복 생성 방지
   Future<UserStatsModel> createUserStats(UserStatsModel stats) async {
     try {
       final response = await _supabase
           .from('user_stats')
-          .insert(stats.toJson())
+          .upsert(stats.toJson())
           .select()
           .single();
 

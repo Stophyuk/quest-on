@@ -36,21 +36,53 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
   final UserStatsRepository _repository;
   String? _currentUserId;
 
-  UserStatsNotifier(this._repository) : super(const AsyncValue.loading());
+  UserStatsNotifier(this._repository) : super(const AsyncValue.data(null));
 
   /// 사용자 통계 로드
   Future<void> loadUserStats(String userId) async {
+    print('🔵 UserStatsNotifier.loadUserStats 호출됨: $userId');
+    _currentUserId = userId;
+    state = const AsyncValue.loading();
+    print('  ⏳ 상태를 loading으로 변경');
+
+    try {
+      print('  📡 DB에서 UserStats 조회 중...');
+      final existingStats = await _repository.getUserStats(userId);
+
+      if (existingStats != null) {
+        print('  ✅ UserStats 조회 성공: ${existingStats.nickname}');
+        state = AsyncValue.data(existingStats);
+      } else {
+        print('  ℹ️ UserStats 없음 → 온보딩 필요 (null 반환)');
+        state = const AsyncValue.data(null);
+      }
+    } catch (e, st) {
+      print('  ❌ UserStats 로드 실패: $e');
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// 사용자 통계 생성 (온보딩용)
+  Future<UserStats> createUserStats({
+    required String userId,
+    required String nickname,
+    required String character,
+  }) async {
     _currentUserId = userId;
     state = const AsyncValue.loading();
 
     try {
-      // 통계 조회, 없으면 생성
-      final stats = await _repository.getUserStats(userId) ??
-          await _repository.createUserStats(userId);
+      final stats = await _repository.createUserStatsWithProfile(
+        userId: userId,
+        nickname: nickname,
+        character: character,
+      );
 
       state = AsyncValue.data(stats);
+      return stats;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 

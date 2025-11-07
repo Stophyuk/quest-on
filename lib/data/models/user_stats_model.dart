@@ -7,6 +7,8 @@ class UserStatsModel extends UserStats {
     required super.level,
     required super.currentExp,
     required super.totalExp,
+    required super.nickname,
+    required super.character,
     required super.updatedAt,
   });
 
@@ -17,6 +19,8 @@ class UserStatsModel extends UserStats {
       level: json['level'] as int? ?? 1,
       currentExp: json['current_exp'] as int? ?? 0,
       totalExp: json['total_exp'] as int? ?? 0,
+      nickname: json['nickname'] as String? ?? 'Player',
+      character: json['character'] as String? ?? '🐰',
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
@@ -30,17 +34,21 @@ class UserStatsModel extends UserStats {
       'level': level,
       'current_exp': currentExp,
       'total_exp': totalExp,
+      'nickname': nickname,
+      'character': character,
       'updated_at': updatedAt.toIso8601String(),
     };
   }
 
   /// 초기 UserStats 생성 (레벨 1, 경험치 0)
-  factory UserStatsModel.initial(String userId) {
+  factory UserStatsModel.initial(String userId, String nickname, String character) {
     return UserStatsModel(
       userId: userId,
       level: 1,
       currentExp: 0,
       totalExp: 0,
+      nickname: nickname,
+      character: character,
       updatedAt: DateTime.now(),
     );
   }
@@ -52,6 +60,8 @@ class UserStatsModel extends UserStats {
       level: stats.level,
       currentExp: stats.currentExp,
       totalExp: stats.totalExp,
+      nickname: stats.nickname,
+      character: stats.character,
       updatedAt: stats.updatedAt,
     );
   }
@@ -63,6 +73,8 @@ class UserStatsModel extends UserStats {
       level: level,
       currentExp: currentExp,
       totalExp: totalExp,
+      nickname: nickname,
+      character: character,
       updatedAt: updatedAt,
     );
   }

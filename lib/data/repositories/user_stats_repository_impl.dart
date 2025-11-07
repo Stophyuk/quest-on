@@ -23,7 +23,21 @@ class UserStatsRepositoryImpl implements UserStatsRepository {
   @override
   Future<UserStats> createUserStats(String userId) async {
     try {
-      final stats = UserStatsModel.initial(userId);
+      final stats = UserStatsModel.initial(userId, 'Player', '🐰');
+      return await _remoteDataSource.createUserStats(stats);
+    } catch (e) {
+      throw Exception('사용자 통계 생성 실패: $e');
+    }
+  }
+
+  @override
+  Future<UserStats> createUserStatsWithProfile({
+    required String userId,
+    required String nickname,
+    required String character,
+  }) async {
+    try {
+      final stats = UserStatsModel.initial(userId, nickname, character);
       return await _remoteDataSource.createUserStats(stats);
     } catch (e) {
       throw Exception('사용자 통계 생성 실패: $e');

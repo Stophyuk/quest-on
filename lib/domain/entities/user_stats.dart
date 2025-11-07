@@ -1,9 +1,11 @@
-/// 사용자 통계 (레벨, 경험치)
+/// 사용자 통계 (레벨, 경험치, 캐릭터, 닉네임)
 class UserStats {
   final String userId;
   final int level;
   final int currentExp; // 현재 레벨에서의 경험치
   final int totalExp; // 누적 총 경험치
+  final String nickname; // 사용자 닉네임
+  final String character; // 선택한 캐릭터 이모지
   final DateTime updatedAt;
 
   const UserStats({
@@ -11,6 +13,8 @@ class UserStats {
     required this.level,
     required this.currentExp,
     required this.totalExp,
+    required this.nickname,
+    required this.character,
     required this.updatedAt,
   });
 
@@ -70,6 +74,8 @@ class UserStats {
       level: newLevel,
       currentExp: newCurrentExp,
       totalExp: newTotalExp,
+      nickname: nickname,
+      character: character,
       updatedAt: DateTime.now(),
     );
   }
