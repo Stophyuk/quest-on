@@ -14,6 +14,24 @@ class LevelUpModal extends StatefulWidget {
     required this.character,
   });
 
+  /// 모달 표시 (static helper method)
+  static Future<void> show({
+    required BuildContext context,
+    required int newLevel,
+    required String levelTitle,
+    required String character,
+  }) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => LevelUpModal(
+        newLevel: newLevel,
+        levelTitle: levelTitle,
+        character: character,
+      ),
+    );
+  }
+
   @override
   State<LevelUpModal> createState() => _LevelUpModalState();
 }
@@ -49,24 +67,6 @@ class _LevelUpModalState extends State<LevelUpModal>
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  /// 모달 표시 (static helper method)
-  static Future<void> show({
-    required BuildContext context,
-    required int newLevel,
-    required String levelTitle,
-    required String character,
-  }) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => LevelUpModal(
-        newLevel: newLevel,
-        levelTitle: levelTitle,
-        character: character,
-      ),
-    );
   }
 
   @override
