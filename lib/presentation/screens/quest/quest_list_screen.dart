@@ -9,6 +9,7 @@ import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
+import 'package:quest_on/presentation/providers/vision_provider.dart';
 import 'package:quest_on/presentation/widgets/player_card.dart';
 import 'package:quest_on/presentation/widgets/error_view.dart';
 import 'package:quest_on/presentation/widgets/loading_view.dart';
@@ -24,6 +25,9 @@ class QuestListScreen extends ConsumerStatefulWidget {
 }
 
 class _QuestListScreenState extends ConsumerState<QuestListScreen> {
+  // Agent-Quick.md: Magic String 제거
+  static const String _defaultWeekGoal = '이번 주 목표 달성하기';
+
   QuestCondition _selectedCondition = QuestCondition.normal;
   bool _hasLoadedQuests = false;
   bool _isLoadingAiSuggestions = false;
@@ -85,13 +89,29 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     }
   }
 
+  /// 현재 주차 목표 가져오기 (Profile에서)
+  /// Agent-Quick.md: 동사로 시작, Early Return 패턴
+  String _getCurrentWeekGoal() {
+    final user = ref.read(authStateProvider).value;
+    if (user == null) return _defaultWeekGoal;
+
+    // profileProvider.family 사용
+    final profileAsync = ref.read(profileProvider(user.id));
+    return profileAsync.when(
+      data: (profile) => profile?.goal ?? _defaultWeekGoal,
+      loading: () => _defaultWeekGoal,
+      error: (_, __) => _defaultWeekGoal,
+    );
+  }
+
   Future<void> _onAiSuggestTap() async {
     setState(() => _isLoadingAiSuggestions = true);
 
     try {
       // AI 추천 받기
+      final currentGoal = _getCurrentWeekGoal();
       final result = await _aiDataSource.getSuggestedQuests(
-        currentWeekGoal: '이번 주 목표 달성하기',  // TODO: 실제 주차 목표 가져오기
+        currentWeekGoal: currentGoal,
         condition: _selectedCondition.label,
       );
 
