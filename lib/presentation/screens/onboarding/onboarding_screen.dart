@@ -1201,12 +1201,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final milestone = milestones[index] as Map<String, dynamic>;
-                      return _buildMilestoneCard(
-                        index + 1,
-                        milestone['title'] as String? ?? '',
-                        milestone['description'] as String? ?? '',
-                        milestone['duration'] as String? ?? '',
-                      );
+                      return _buildMilestoneCard(index + 1, milestone);
                     },
                   ),
               ],
@@ -1237,12 +1232,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Widget _buildMilestoneCard(
-    int step,
-    String title,
-    String description,
-    String duration,
-  ) {
+  Widget _buildMilestoneCard(int step, Map<String, dynamic> milestone) {
+    final title = milestone['title'] as String? ?? '';
+    final description = milestone['description'] as String? ?? '';
+    final duration = milestone['duration'] as String? ?? '';
+    final successCriteria = milestone['successCriteria'] as String? ?? '';
+    final potentialObstacles = milestone['potentialObstacles'] as String? ?? '';
+    final keyActions = milestone['keyActions'] as List<dynamic>? ?? [];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1262,6 +1259,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
               Container(
@@ -1293,6 +1291,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ],
           ),
+
+          // Description
           if (description.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -1303,6 +1303,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
             ),
           ],
+
+          // Duration
           if (duration.isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
@@ -1321,6 +1323,100 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                 ),
               ],
+            ),
+          ],
+
+          // Success Criteria
+          if (successCriteria.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.successColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 16,
+                    color: AppTheme.successColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      successCriteria,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.successColor,
+                            height: 1.4,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Key Actions
+          if (keyActions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...keyActions.map((action) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 14,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        action.toString(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textPrimary,
+                              height: 1.3,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+
+          // Potential Obstacles
+          if (potentialObstacles.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.warningColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.warning_amber,
+                    size: 16,
+                    color: AppTheme.warningColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      potentialObstacles,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.warningColor,
+                            height: 1.4,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],

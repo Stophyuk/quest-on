@@ -10,6 +10,7 @@ class AppTheme {
   static const Color surfaceColor = Colors.white;
   static const Color errorColor = Color(0xFFEF4444);
   static const Color successColor = Color(0xFF10B981);
+  static const Color warningColor = Color(0xFFF59E0B); // Orange
 
   // 텍스트 컬러
   static const Color textPrimary = Color(0xFF111827);
