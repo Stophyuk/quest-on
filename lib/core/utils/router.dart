@@ -10,7 +10,6 @@ import 'package:quest_on/presentation/screens/vision/vision_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_survey_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_coaching_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_roadmap_generator_screen.dart';
-import 'package:quest_on/presentation/screens/quest/quest_list_screen.dart';
 import 'package:quest_on/presentation/screens/quest/quest_add_screen.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 

@@ -5,6 +5,7 @@ import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/core/constants/env.dart';
 import 'package:quest_on/core/utils/router.dart';
+import 'package:quest_on/data/services/quest_widget_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,9 @@ void main() async {
     url: Env.supabaseUrl,
     anonKey: Env.supabaseAnonKey,
   );
+
+  // 위젯 서비스 초기화
+  await QuestWidgetService.initialize();
 
   runApp(
     const ProviderScope(

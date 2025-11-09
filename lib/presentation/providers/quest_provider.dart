@@ -4,6 +4,7 @@ import 'package:quest_on/domain/repositories/quest_repository.dart';
 import 'package:quest_on/data/datasources/remote/quest_remote_datasource.dart';
 import 'package:quest_on/data/repositories/quest_repository_impl.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
+import 'package:quest_on/data/services/quest_widget_service.dart';
 
 /// Quest Remote DataSource Provider
 final questRemoteDataSourceProvider = Provider<QuestRemoteDataSource>((ref) {
@@ -68,8 +69,21 @@ class QuestNotifier extends StateNotifier<AsyncValue<List<Quest>>> {
     try {
       final quests = await _repository.getActiveQuests(userId);
       state = AsyncValue.data(quests);
+
+      // 위젯 업데이트
+      await _updateWidget(quests);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// 위젯 업데이트 헬퍼 메서드
+  Future<void> _updateWidget(List<Quest> quests) async {
+    try {
+      await QuestWidgetService.updateTodayQuests(quests);
+    } catch (e) {
+      // 위젯 업데이트 실패는 조용히 처리 (앱 기능에 영향 없음)
+      print('위젯 업데이트 실패: $e');
     }
   }
 
