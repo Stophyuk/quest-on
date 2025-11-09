@@ -152,6 +152,65 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     }
   }
 
+  /// 퀘스트 옵션 표시 (편집/삭제)
+  void _showQuestOptions(Quest quest) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppTheme.primaryColor),
+              title: const Text('퀘스트 편집'),
+              onTap: () {
+                Navigator.pop(context);
+                _onQuestEdit(quest);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: AppTheme.errorColor),
+              title: const Text('퀘스트 삭제'),
+              onTap: () {
+                Navigator.pop(context);
+                _onQuestDelete(quest);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 퀘스트 편집
+  Future<void> _onQuestEdit(Quest quest) async {
+    await context.push('/quest/add', extra: quest);
+  }
+
+  /// 퀘스트 삭제
+  Future<void> _onQuestDelete(Quest quest) async {
+    final confirmed = await UiHelpers.showConfirmDialog(
+      context,
+      title: '퀘스트 삭제',
+      message: '"${quest.title}" 퀘스트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      cancelText: '취소',
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(questNotifierProvider.notifier).deleteQuest(quest.id);
+        if (mounted) {
+          UiHelpers.showSuccessSnackBar(context, '퀘스트가 삭제되었습니다');
+        }
+      } catch (e) {
+        if (mounted) {
+          UiHelpers.showErrorSnackBar(context, '삭제 중 오류가 발생했습니다: $e');
+        }
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -359,9 +418,7 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
       elevation: 2,
       child: InkWell(
         onTap: () => _onQuestTap(quest),
-        onLongPress: () {
-          // TODO: 편집/삭제 옵션 표시
-        },
+        onLongPress: () => _showQuestOptions(quest),
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         child: Padding(
           padding: const EdgeInsets.all(16),

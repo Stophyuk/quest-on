@@ -8,9 +8,11 @@ import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
 
-/// 퀘스트 추가 화면
+/// 퀘스트 추가/편집 화면
 class QuestAddScreen extends ConsumerStatefulWidget {
-  const QuestAddScreen({super.key});
+  final Quest? quest; // null이면 추가 모드, 값이 있으면 편집 모드
+
+  const QuestAddScreen({super.key, this.quest});
 
   @override
   ConsumerState<QuestAddScreen> createState() => _QuestAddScreenState();
@@ -27,6 +29,23 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
   QuestCondition _selectedCondition = QuestCondition.normal;
 
   bool _isLoading = false;
+
+  bool get _isEditMode => widget.quest != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // 편집 모드일 경우 초기값 설정
+    if (_isEditMode) {
+      final quest = widget.quest!;
+      _titleController.text = quest.title;
+      _descriptionController.text = quest.description ?? '';
+      _targetCountController.text = quest.targetCount.toString();
+      _selectedCategory = quest.category;
+      _selectedDifficulty = quest.difficulty;
+      _selectedCondition = quest.targetCondition;
+    }
+  }
 
   @override
   void dispose() {
@@ -54,25 +73,48 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
     try {
       final targetCount = int.parse(_targetCountController.text);
 
-      await ref.read(questNotifierProvider.notifier).createQuest(
-            userId: user.id,
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
-            category: _selectedCategory,
-            difficulty: _selectedDifficulty,
-            targetCondition: _selectedCondition,
-            targetCount: targetCount,
-          );
+      if (_isEditMode) {
+        // 편집 모드: 기존 퀘스트 업데이트
+        final updatedQuest = widget.quest!.copyWith(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          category: _selectedCategory,
+          difficulty: _selectedDifficulty,
+          targetCondition: _selectedCondition,
+          targetCount: targetCount,
+        );
 
-      if (mounted) {
-        UiHelpers.showSuccessSnackBar(context, '퀘스트가 추가되었습니다!');
-        context.pop();
+        await ref.read(questNotifierProvider.notifier).updateQuest(updatedQuest);
+
+        if (mounted) {
+          UiHelpers.showSuccessSnackBar(context, '퀘스트가 수정되었습니다!');
+          context.pop();
+        }
+      } else {
+        // 추가 모드: 새 퀘스트 생성
+        await ref.read(questNotifierProvider.notifier).createQuest(
+              userId: user.id,
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim().isEmpty
+                  ? null
+                  : _descriptionController.text.trim(),
+              category: _selectedCategory,
+              difficulty: _selectedDifficulty,
+              targetCondition: _selectedCondition,
+              targetCount: targetCount,
+            );
+
+        if (mounted) {
+          UiHelpers.showSuccessSnackBar(context, '퀘스트가 추가되었습니다!');
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
-        UiHelpers.showErrorSnackBar(context, '퀘스트 추가 중 오류가 발생했습니다: $e');
+        final action = _isEditMode ? '수정' : '추가';
+        UiHelpers.showErrorSnackBar(context, '퀘스트 $action 중 오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {
@@ -91,7 +133,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('퀘스트 추가'),
+        title: Text(_isEditMode ? '퀘스트 편집' : '퀘스트 추가'),
       ),
       body: SafeArea(
         child: Form(
@@ -326,9 +368,9 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          '퀘스트 추가',
-                          style: TextStyle(fontSize: 16),
+                      : Text(
+                          _isEditMode ? '퀘스트 수정' : '퀘스트 추가',
+                          style: const TextStyle(fontSize: 16),
                         ),
                 ),
               ),

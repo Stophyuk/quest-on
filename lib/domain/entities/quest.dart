@@ -52,6 +52,41 @@ class Quest {
   bool get isActive {
     return deletedAt == null && !isCompleted;
   }
+
+  /// copyWith 메서드 (불변 객체 업데이트용)
+  Quest copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? description,
+    QuestCategory? category,
+    QuestDifficulty? difficulty,
+    QuestCondition? targetCondition,
+    int? targetCount,
+    int? currentCount,
+    bool? isCompleted,
+    int? expReward,
+    DateTime? createdAt,
+    DateTime? completedAt,
+    DateTime? deletedAt,
+  }) {
+    return Quest(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      targetCondition: targetCondition ?? this.targetCondition,
+      targetCount: targetCount ?? this.targetCount,
+      currentCount: currentCount ?? this.currentCount,
+      isCompleted: isCompleted ?? this.isCompleted,
+      expReward: expReward ?? this.expReward,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
 }
 
 /// 퀘스트 카테고리

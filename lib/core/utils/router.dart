@@ -12,6 +12,7 @@ import 'package:quest_on/presentation/screens/vision/vision_coaching_screen.dart
 import 'package:quest_on/presentation/screens/vision/vision_roadmap_generator_screen.dart';
 import 'package:quest_on/presentation/screens/quest/quest_list_screen.dart';
 import 'package:quest_on/presentation/screens/quest/quest_add_screen.dart';
+import 'package:quest_on/domain/entities/quest.dart';
 
 /// GoRouter 설정
 final routerProvider = Provider<GoRouter>((ref) {
@@ -128,10 +129,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MainScreen(),
       ),
 
-      // 퀘스트 추가
+      // 퀘스트 추가/편집
       GoRoute(
         path: '/quest/add',
-        builder: (context, state) => const QuestAddScreen(),
+        builder: (context, state) {
+          final quest = state.extra as Quest?;
+          return QuestAddScreen(quest: quest);
+        },
       ),
     ],
   );
