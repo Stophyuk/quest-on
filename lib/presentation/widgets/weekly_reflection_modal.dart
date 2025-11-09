@@ -125,7 +125,7 @@ class WeeklyReflectionModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundLight,
+                  color: AppTheme.backgroundColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

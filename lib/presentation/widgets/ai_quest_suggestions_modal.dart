@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
+import 'package:quest_on/core/utils/quest_parsers.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 
 /// AI 퀘스트 추천 결과 모달
@@ -62,7 +63,7 @@ class AiQuestSuggestionsModal extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withValues(alpha: AppTheme.opacityLight),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -126,8 +127,8 @@ class AiQuestSuggestionsModal extends StatelessWidget {
   }
 
   Widget _buildSuggestionCard(BuildContext context, Map<String, dynamic> suggestion) {
-    final difficulty = _parseDifficulty(suggestion['difficulty'] ?? 'normal');
-    final category = _parseCategory(suggestion['category'] ?? '생산성');
+    final difficulty = QuestParsers.parseDifficulty(suggestion['difficulty'] ?? 'normal');
+    final category = QuestParsers.parseCategory(suggestion['category'] ?? '생산성');
 
     return Card(
       elevation: 2,
@@ -164,7 +165,7 @@ class AiQuestSuggestionsModal extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getDifficultyColor(difficulty).withOpacity(0.2),
+                      color: _getDifficultyColor(difficulty).withValues(alpha: AppTheme.opacityMedium),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -275,42 +276,6 @@ class AiQuestSuggestionsModal extends StatelessWidget {
     );
   }
 
-  QuestDifficulty _parseDifficulty(String difficulty) {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return QuestDifficulty.easy;
-      case 'normal':
-        return QuestDifficulty.normal;
-      case 'hard':
-        return QuestDifficulty.hard;
-      case 'veryhard':
-      case 'very_hard':
-        return QuestDifficulty.veryHard;
-      default:
-        return QuestDifficulty.normal;
-    }
-  }
-
-  QuestCategory _parseCategory(String category) {
-    switch (category) {
-      case '생산성':
-      case '업무':
-        return QuestCategory.work;
-      case '학습':
-      case '공부':
-        return QuestCategory.study;
-      case '건강':
-        return QuestCategory.health;
-      case '관계':
-        return QuestCategory.relationship;
-      case '취미':
-        return QuestCategory.hobby;
-      case '성장':
-        return QuestCategory.growth;
-      default:
-        return QuestCategory.other;
-    }
-  }
 
   Color _getDifficultyColor(QuestDifficulty difficulty) {
     switch (difficulty) {

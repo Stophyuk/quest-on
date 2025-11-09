@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
+import 'package:quest_on/core/utils/ui_helpers.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
@@ -42,12 +43,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
 
     final user = ref.read(authStateProvider).value;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그인이 필요합니다'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      UiHelpers.showErrorSnackBar(context, '로그인이 필요합니다');
       return;
     }
 
@@ -71,22 +67,12 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
           );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('퀘스트가 추가되었습니다!'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
+        UiHelpers.showSuccessSnackBar(context, '퀘스트가 추가되었습니다!');
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('퀘스트 추가 중 오류가 발생했습니다: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        UiHelpers.showErrorSnackBar(context, '퀘스트 추가 중 오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {
@@ -175,7 +161,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                         });
                       }
                     },
-                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: AppTheme.opacityMedium),
                     checkmarkColor: AppTheme.primaryColor,
                   );
                 }).toList(),
@@ -205,7 +191,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                         });
                       }
                     },
-                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: AppTheme.opacityMedium),
                     checkmarkColor: AppTheme.primaryColor,
                   );
                 }).toList(),
@@ -269,7 +255,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                         });
                       }
                     },
-                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: AppTheme.opacityMedium),
                     checkmarkColor: AppTheme.primaryColor,
                   );
                 }).toList(),
@@ -280,10 +266,10 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+                  color: AppTheme.secondaryColor.withValues(alpha: AppTheme.opacityLight),
                   borderRadius: BorderRadius.circular(AppConstants.borderRadius),
                   border: Border.all(
-                    color: AppTheme.secondaryColor.withValues(alpha: 0.3),
+                    color: AppTheme.secondaryColor.withValues(alpha: AppTheme.opacityMedium),
                   ),
                 ),
                 child: Row(

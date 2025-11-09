@@ -35,8 +35,17 @@ class AppTheme {
     AppConstants.categoryOther: Color(0xFF6B7280),
   };
 
-  // 라이트 테마
-  static ThemeData get lightTheme {
+  // Opacity 상수 (Agent-Full.md: Magic Numbers 제거)
+  static const double opacityVeryLight = 0.05;
+  static const double opacityLight = 0.1;
+  static const double opacityMedium = 0.2;
+  static const double opacityHigh = 0.5;
+  static const double opacityVeryHigh = 0.8;
+
+  // 라이트 테마 (Agent-Full.md: 성능 최적화 - static final로 캐싱)
+  static final ThemeData lightTheme = _buildLightTheme();
+
+  static ThemeData _buildLightTheme() {
     return ThemeData(
       useMaterial3: false,  // Temporarily disabled due to shader compiler issue
       colorScheme: ColorScheme.fromSeed(
@@ -90,7 +99,7 @@ class AppTheme {
       // Chip 테마
       chipTheme: ChipThemeData(
         backgroundColor: backgroundColor,
-        selectedColor: primaryColor.withValues(alpha: 0.2),
+        selectedColor: primaryColor.withValues(alpha: opacityMedium),
         labelStyle: const TextStyle(color: textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -200,8 +209,6 @@ class AppTheme {
     );
   }
 
-  // 다크 테마 (추후 구현)
-  static ThemeData get darkTheme {
-    return lightTheme; // 일단 라이트 테마와 동일
-  }
+  // 다크 테마 (추후 구현, Agent-Full.md: 성능 최적화 - static final로 캐싱)
+  static final ThemeData darkTheme = lightTheme; // 일단 라이트 테마와 동일
 }

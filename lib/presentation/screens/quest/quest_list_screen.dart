@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
+import 'package:quest_on/core/utils/quest_parsers.dart';
+import 'package:quest_on/core/utils/ui_helpers.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
@@ -44,20 +46,16 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
           .adjustAllQuestsTarget(newCondition);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('컨디션이 "${newCondition.label}"로 변경되었습니다'),
-            backgroundColor: AppTheme.successColor,
-          ),
+        UiHelpers.showSuccessSnackBar(
+          context,
+          '컨디션이 "${newCondition.label}"로 변경되었습니다',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('목표 조정 중 오류가 발생했습니다: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
+        UiHelpers.showErrorSnackBar(
+          context,
+          '목표 조정 중 오류가 발생했습니다: $e',
         );
       }
     }
@@ -71,21 +69,17 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
 
       if (mounted) {
         if (updatedQuest.isCompleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('🎉 "${updatedQuest.title}" 완료! +${updatedQuest.expReward} EXP'),
-              backgroundColor: AppTheme.successColor,
-            ),
+          UiHelpers.showSuccessSnackBar(
+            context,
+            '🎉 "${updatedQuest.title}" 완료! +${updatedQuest.expReward} EXP',
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('진행 업데이트 중 오류가 발생했습니다: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
+        UiHelpers.showErrorSnackBar(
+          context,
+          '진행 업데이트 중 오류가 발생했습니다: $e',
         );
       }
     }
@@ -121,28 +115,24 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
             await ref.read(questNotifierProvider.notifier).createQuest(
                   userId: user.id,
                   title: suggestion['title'] ?? '',
-                  category: _parseCategory(suggestion['category'] ?? '생산성'),
-                  difficulty: _parseDifficulty(suggestion['difficulty'] ?? 'normal'),
+                  category: QuestParsers.parseCategory(suggestion['category'] ?? '생산성'),
+                  difficulty: QuestParsers.parseDifficulty(suggestion['difficulty'] ?? 'normal'),
                   targetCondition: _selectedCondition,
                   targetCount: 1,
                   description: suggestion['reason'],
                 );
 
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('퀘스트가 추가되었습니다'),
-                  backgroundColor: AppTheme.successColor,
-                ),
+              UiHelpers.showSuccessSnackBar(
+                context,
+                '퀘스트가 추가되었습니다',
               );
             }
           } catch (e) {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(ErrorView.getFriendlyMessage(e)),
-                  backgroundColor: AppTheme.errorColor,
-                ),
+              UiHelpers.showErrorSnackBar(
+                context,
+                ErrorView.getFriendlyMessage(e),
               );
             }
           }
@@ -150,11 +140,9 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ErrorView.getFriendlyMessage(e)),
-            backgroundColor: AppTheme.errorColor,
-          ),
+        UiHelpers.showErrorSnackBar(
+          context,
+          ErrorView.getFriendlyMessage(e),
         );
       }
     } finally {
@@ -164,36 +152,6 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
     }
   }
 
-  QuestCategory _parseCategory(String category) {
-    switch (category) {
-      case '생산성':
-        return QuestCategory.work;
-      case '학습':
-        return QuestCategory.study;
-      case '건강':
-        return QuestCategory.health;
-      case '관계':
-        return QuestCategory.relationship;
-      default:
-        return QuestCategory.work;
-    }
-  }
-
-  QuestDifficulty _parseDifficulty(String difficulty) {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return QuestDifficulty.easy;
-      case 'normal':
-        return QuestDifficulty.normal;
-      case 'hard':
-        return QuestDifficulty.hard;
-      case 'veryhard':
-      case 'very_hard':
-        return QuestDifficulty.veryHard;
-      default:
-        return QuestDifficulty.normal;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
