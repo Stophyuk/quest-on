@@ -38,7 +38,7 @@ class AppTheme {
   // 라이트 테마
   static ThemeData get lightTheme {
     return ThemeData(
-      useMaterial3: true,
+      useMaterial3: false,  // Temporarily disabled due to shader compiler issue
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,

@@ -115,10 +115,15 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
         onQuestSelect: (suggestion) async {
           // 퀘스트 추가
           try {
+            final user = ref.read(authStateProvider).value;
+            if (user == null) return;
+
             await ref.read(questNotifierProvider.notifier).createQuest(
+                  userId: user.id,
                   title: suggestion['title'] ?? '',
                   category: _parseCategory(suggestion['category'] ?? '생산성'),
                   difficulty: _parseDifficulty(suggestion['difficulty'] ?? 'normal'),
+                  targetCondition: _selectedCondition,
                   targetCount: 1,
                   description: suggestion['reason'],
                 );
@@ -162,15 +167,15 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   QuestCategory _parseCategory(String category) {
     switch (category) {
       case '생산성':
-        return QuestCategory.productivity;
+        return QuestCategory.work;
       case '학습':
-        return QuestCategory.learning;
+        return QuestCategory.study;
       case '건강':
         return QuestCategory.health;
       case '관계':
         return QuestCategory.relationship;
       default:
-        return QuestCategory.productivity;
+        return QuestCategory.work;
     }
   }
 

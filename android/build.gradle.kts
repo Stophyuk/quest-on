@@ -17,6 +17,13 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    // Kotlin language version setting
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            languageVersion = "1.6"
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
