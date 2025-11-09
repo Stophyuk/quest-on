@@ -31,4 +31,13 @@ abstract class AuthRepository {
   Future<void> updateProfile({
     String? name,
   });
+
+  /// Google 로그인
+  Future<User> signInWithGoogle();
+
+  /// 카카오 로그인
+  Future<User> signInWithKakao();
+
+  /// 네이버 로그인
+  Future<User> signInWithNaver();
 }

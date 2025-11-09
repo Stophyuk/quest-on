@@ -222,11 +222,179 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+
+                // 구분선
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '또는',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.textSecondary,
+                            ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // 소셜 로그인 버튼들
+                _buildSocialLoginButton(
+                  onPressed: _handleGoogleLogin,
+                  icon: Icons.g_mobiledata,
+                  label: 'Google 로그인',
+                  backgroundColor: Colors.white,
+                  textColor: Colors.black87,
+                  borderColor: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 12),
+                _buildSocialLoginButton(
+                  onPressed: _handleKakaoLogin,
+                  icon: Icons.chat_bubble,
+                  label: '카카오 로그인',
+                  backgroundColor: const Color(0xFFFEE500),
+                  textColor: const Color(0xFF191919),
+                ),
+                const SizedBox(height: 12),
+                _buildSocialLoginButton(
+                  onPressed: _handleNaverLogin,
+                  icon: Icons.n_mobiledata,
+                  label: '네이버 로그인',
+                  backgroundColor: const Color(0xFF03C75A),
+                  textColor: Colors.white,
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildSocialLoginButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color textColor,
+    Color? borderColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : onPressed,
+      icon: Icon(icon, size: 24),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          side: borderColor != null
+              ? BorderSide(color: borderColor, width: 1)
+              : BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google 로그인 성공!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorView.getFriendlyMessage(e)),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleKakaoLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithKakao();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('카카오 로그인 성공!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorView.getFriendlyMessage(e)),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleNaverLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithNaver();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('네이버 로그인 성공!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorView.getFriendlyMessage(e)),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
