@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
 import 'package:quest_on/core/constants/env.dart';
@@ -9,15 +10,27 @@ import 'package:quest_on/data/services/quest_widget_service.dart';
 import 'package:quest_on/data/services/analytics_service.dart';
 import 'package:quest_on/data/services/ad_service.dart';
 import 'package:quest_on/data/services/purchase_service.dart';
+import 'package:quest_on/data/services/ai/openai_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // .env 파일 로드
+  await dotenv.load(fileName: '.env');
 
   // Supabase 초기화
   await Supabase.initialize(
     url: Env.supabaseUrl,
     anonKey: Env.supabaseAnonKey,
   );
+
+  // OpenAI 서비스 초기화
+  try {
+    await OpenAIService().initialize();
+    print('[Main] OpenAI 서비스 초기화 완료');
+  } catch (e) {
+    print('[Main] OpenAI 서비스 초기화 실패: $e');
+  }
 
   // Firebase Analytics 초기화
   // NOTE: Firebase 설정이 완료되면 자동으로 활성화됩니다

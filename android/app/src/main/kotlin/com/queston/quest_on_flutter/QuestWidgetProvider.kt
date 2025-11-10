@@ -39,8 +39,8 @@ class QuestWidgetProvider : AppWidgetProvider() {
         // Get widget data
         val questCount = widgetData.getInt(WIDGET_KEY_QUEST_COUNT, 0)
         val completedCount = widgetData.getInt(WIDGET_KEY_COMPLETED_COUNT, 0)
-        val questListData = widgetData.getString(WIDGET_KEY_QUEST_LIST) ?: ""
-        val lastUpdate = widgetData.getString(WIDGET_KEY_LAST_UPDATE) ?: ""
+        val questListData = widgetData.getString(WIDGET_KEY_QUEST_LIST, "") ?: ""
+        val lastUpdate = widgetData.getString(WIDGET_KEY_LAST_UPDATE, "") ?: ""
 
         // Update count text
         views.setTextViewText(

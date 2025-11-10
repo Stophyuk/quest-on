@@ -120,7 +120,7 @@ class AuthRemoteDataSource {
     try {
       // Google Sign-In 시작
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: '884314617277-bco9flhfdaj716atou6kj34k2r1nc64q.apps.googleusercontent.com',
+        serverClientId: '884314617277-uq8ko8h9ant3cf2m4bblcs9ph3fee429.apps.googleusercontent.com',
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();

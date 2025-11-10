@@ -10,8 +10,15 @@ import 'package:quest_on/presentation/screens/vision/vision_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_survey_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_coaching_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_roadmap_generator_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_onboarding_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_generating_screen.dart';
+import 'package:quest_on/presentation/screens/vision/vision_review_screen.dart';
+import 'package:quest_on/presentation/screens/goal/goal_tree_generating_screen.dart';
+import 'package:quest_on/presentation/screens/goal/goal_tree_view_screen.dart';
 import 'package:quest_on/presentation/screens/quest/quest_add_screen.dart';
 import 'package:quest_on/domain/entities/quest.dart';
+import 'package:quest_on/domain/entities/vision.dart';
+import 'package:quest_on/domain/entities/goal_tree.dart';
 
 /// GoRouter 설정
 final routerProvider = Provider<GoRouter>((ref) {
@@ -120,6 +127,48 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/vision/roadmap',
         builder: (context, state) => const VisionRoadmapGeneratorScreen(),
+      ),
+
+      // Vision v2 - 온보딩 (9개 질문)
+      GoRoute(
+        path: '/vision/onboarding',
+        builder: (context, state) => const VisionOnboardingScreen(),
+      ),
+
+      // Vision v2 - AI 비전 노트 생성
+      GoRoute(
+        path: '/vision/generating',
+        builder: (context, state) {
+          final visionId = state.extra as String;
+          return VisionGeneratingScreen(visionId: visionId);
+        },
+      ),
+
+      // Vision v2 - 비전 노트 확인/수정
+      GoRoute(
+        path: '/vision/review',
+        builder: (context, state) {
+          final vision = state.extra as Vision;
+          return VisionReviewScreen(vision: vision);
+        },
+      ),
+
+      // Goal Tree - AI 생성 중
+      GoRoute(
+        path: '/goal-tree/generating',
+        builder: (context, state) {
+          final vision = state.extra as Vision;
+          return GoalTreeGeneratingScreen(vision: vision);
+        },
+      ),
+
+      // Goal Tree - 표시
+      GoRoute(
+        path: '/goal-tree/view',
+        builder: (context, state) {
+          final goalTree = state.extra as GoalTree;
+          return GoalTreeViewScreen(goalTree: goalTree);
+        },
       ),
 
       // 메인 화면 (하단 네비게이션 포함)
