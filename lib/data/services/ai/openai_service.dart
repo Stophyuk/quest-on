@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -123,11 +125,35 @@ class OpenAIService {
 
       if (kDebugMode) {
         print('[OpenAI] 목표 트리 생성 완료');
+        print('[OpenAI] 원본 응답: $goalTreeJson');
       }
 
-      // JSON 파싱 (현재는 raw 응답만 반환)
-      // TODO: 실제 JSON 파싱 로직 추가
-      return {'raw': goalTreeJson};
+      // JSON 파싱
+      try {
+        // JSON 문자열에서 코드 블록 마크다운 제거 (```json ... ``` 형태)
+        String cleanedJson = goalTreeJson.trim();
+        if (cleanedJson.startsWith('```')) {
+          // ```json 또는 ``` 제거
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```json\s*'), '');
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```\s*'), '');
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'\s*```$'), '');
+          cleanedJson = cleanedJson.trim();
+        }
+
+        final parsed = jsonDecode(cleanedJson) as Map<String, dynamic>;
+
+        if (kDebugMode) {
+          print('[OpenAI] JSON 파싱 성공: ${parsed.keys}');
+        }
+
+        return parsed;
+      } catch (e) {
+        if (kDebugMode) {
+          print('[OpenAI] JSON 파싱 실패, raw 응답 반환: $e');
+        }
+        // 파싱 실패 시 raw 응답 반환
+        return {'raw': goalTreeJson, 'parseError': e.toString()};
+      }
     } catch (e) {
       if (kDebugMode) {
         print('[OpenAI] 목표 트리 생성 실패: $e');
@@ -183,12 +209,49 @@ class OpenAIService {
 
       if (kDebugMode) {
         print('[OpenAI] 퀘스트 $count개 추천 완료');
+        print('[OpenAI] 원본 응답: $questsJson');
       }
 
-      // TODO: JSON 파싱하여 List<Map<String, dynamic>> 변환
-      return [
-        {'title': '샘플 퀘스트 1', 'description': '설명', 'priority': 10},
-      ];
+      // JSON 파싱
+      try {
+        // JSON 문자열에서 코드 블록 마크다운 제거 (```json ... ``` 형태)
+        String cleanedJson = questsJson.trim();
+        if (cleanedJson.startsWith('```')) {
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```json\s*'), '');
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```\s*'), '');
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'\s*```$'), '');
+          cleanedJson = cleanedJson.trim();
+        }
+
+        final parsed = jsonDecode(cleanedJson);
+
+        if (parsed is List) {
+          final quests = parsed.map((item) => item as Map<String, dynamic>).toList();
+
+          if (kDebugMode) {
+            print('[OpenAI] JSON 파싱 성공: ${quests.length}개 퀘스트');
+          }
+
+          return quests;
+        } else {
+          throw FormatException('응답이 배열 형식이 아닙니다');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('[OpenAI] JSON 파싱 실패, 기본 퀘스트 반환: $e');
+        }
+        // 파싱 실패 시 기본 퀘스트 반환
+        return [
+          {
+            'title': '비전 노트 다시 읽기',
+            'description': '나의 비전과 목표를 확인하고 오늘 할 일을 계획해보세요',
+            'category': '성찰',
+            'difficulty': 1,
+            'priority': 10,
+            'estimatedTime': '5',
+          },
+        ];
+      }
     } catch (e) {
       if (kDebugMode) {
         print('[OpenAI] 퀘스트 추천 실패: $e');
