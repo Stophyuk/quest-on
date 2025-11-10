@@ -263,45 +263,36 @@ class OpenAIService {
     final values = answers['values'] ?? '미입력';
     final currentIdentity = answers['currentIdentity'] ?? '미입력';
     final futureIdentity = answers['futureIdentity'] ?? '미입력';
-    final lifeDream = answers['lifeDream'] ?? '미입력';
     final concern = answers['concern'] ?? '미입력';
-    final futureGoal = answers['futureGoal'] ?? '미입력';
     final routine = answers['routine'] ?? '미입력';
-    final learningStyle = answers['learningStyle'] ?? '미입력';
-    final motivation = answers['motivation'] ?? '미입력';
+    final motivation = answers['motivation'] ?? '';
 
     return '''
 사용자가 작성한 응답을 바탕으로 영감을 주는 비전 노트를 생성해주세요.
 
 응답:
-1. 가치관: $values
-2. 현재 정체성: $currentIdentity
-3. 3년 후 정체성: $futureIdentity
-4. 인생의 꿈: $lifeDream
-5. 현재 가장 큰 고민: $concern
-6. 3년 후 목표: $futureGoal
-7. 만들고 싶은 습관: $routine
-8. 학습 선호 스타일: $learningStyle
-9. 동기부여 요인: $motivation
+1. 가장 중요한 가치: $values
+2. 지금의 나: $currentIdentity
+3. 3년 후의 나: $futureIdentity
+4. 집중하고 싶은 주제/고민: $concern
+5. 만들고 싶은 습관: $routine
+${motivation.isNotEmpty ? '6. 동기부여 방식: $motivation' : ''}
 
 아래 구조로 비전 노트를 생성해주세요:
 
 # 당신이 중요하게 여기는 가치
-(사용자의 가치관을 3줄로 요약)
+(사용자가 선택한 가치관을 바탕으로 2-3줄로 요약)
 
-# 당신의 현재 모습과 꿈
-(현재 정체성과 꿈을 정리)
+# 지금의 당신, 그리고 미래
+(현재 모습과 3년 후 되고 싶은 모습을 연결하여 정리)
 
-# 그리고 3년 후 당신의 모습
-(미래 정체성과 목표를 구체화)
+# 당신이 집중할 방향
+(집중하고 싶은 주제와 고민을 바탕으로 성장 방향 제시)
 
-# 당신만의 성장 방법
-(학습 선호 스타일과 습관 정리)
+# 성장을 위한 첫 걸음
+(만들고 싶은 습관을 바탕으로 구체적인 실천 방법 제안)
 
-# 당신을 움직이는 동력
-(동기부여 요인 정리)
-
-친근하고 격려하는 어조로 작성하되, 500-700자 분량으로 작성해주세요. 따뜻하고 격려하는 톤으로 작성해주세요.
+친근하고 격려하는 어조로 작성하되, 400-600자 분량으로 작성해주세요. 따뜻하고 격려하는 톤으로 작성해주세요.
 ''';
   }
 

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quest_on/domain/entities/vision.dart';
 import 'package:quest_on/presentation/providers/vision_v2_provider.dart';
 
-/// Vision 온보딩 화면 (9개 질문 대화형 UI)
+/// Vision 온보딩 화면 (6개 질문 대화형 UI)
 class VisionOnboardingScreen extends ConsumerStatefulWidget {
   const VisionOnboardingScreen({super.key});
 
@@ -17,6 +17,7 @@ class _VisionOnboardingScreenState
     extends ConsumerState<VisionOnboardingScreen> {
   final PageController _pageController = PageController();
   final Map<String, TextEditingController> _controllers = {};
+  final Map<String, Set<String>> _selectedKeywords = {}; // 키워드 선택형 답변
   final Map<String, String> _answers = {};
   int _currentPage = 0;
   bool _isSubmitting = false;
@@ -24,9 +25,13 @@ class _VisionOnboardingScreenState
   @override
   void initState() {
     super.initState();
-    // 각 질문별 컨트롤러 초기화
+    // 텍스트 입력형 질문만 컨트롤러 초기화
     for (var question in VisionQuestion.values) {
-      _controllers[question.key] = TextEditingController();
+      if (!question.isKeywordType) {
+        _controllers[question.key] = TextEditingController();
+      } else {
+        _selectedKeywords[question.key] = {};
+      }
     }
   }
 
@@ -57,10 +62,31 @@ class _VisionOnboardingScreenState
     }
   }
 
+  bool _canProceed() {
+    final currentQuestion = VisionQuestion.values[_currentPage];
+
+    if (currentQuestion.isOptional) {
+      return true; // 선택사항은 항상 진행 가능
+    }
+
+    if (currentQuestion.isKeywordType) {
+      final selected = _selectedKeywords[currentQuestion.key] ?? {};
+      return selected.isNotEmpty;
+    } else {
+      final text = _controllers[currentQuestion.key]?.text ?? '';
+      return text.trim().isNotEmpty;
+    }
+  }
+
   Future<void> _submit() async {
     // 모든 답변 수집
     for (var question in VisionQuestion.values) {
-      _answers[question.key] = _controllers[question.key]!.text;
+      if (question.isKeywordType) {
+        final selected = _selectedKeywords[question.key] ?? {};
+        _answers[question.key] = selected.join(', ');
+      } else {
+        _answers[question.key] = _controllers[question.key]?.text ?? '';
+      }
     }
 
     setState(() {
@@ -201,19 +227,40 @@ class _VisionOnboardingScreenState
           const SizedBox(height: 20),
 
           // 질문 번호 태그
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Question $currentNumber',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$currentNumber/$totalQuestions',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
+              if (question.isOptional) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '선택',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
 
           const SizedBox(height: 24),
@@ -229,30 +276,11 @@ class _VisionOnboardingScreenState
 
           const SizedBox(height: 32),
 
-          // 답변 입력 필드
-          TextField(
-            controller: _controllers[question.key],
-            maxLines: 8,
-            decoration: InputDecoration(
-              hintText: '자유롭게 작성해주세요...',
-              hintStyle: TextStyle(color: Colors.grey[400]),
-              filled: true,
-              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: theme.colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              contentPadding: const EdgeInsets.all(20),
-            ),
-            style: theme.textTheme.bodyLarge,
-          ),
+          // 답변 입력 영역 (키워드형 or 텍스트형)
+          if (question.isKeywordType)
+            _buildKeywordSelector(question)
+          else
+            _buildTextInput(question, theme),
 
           const SizedBox(height: 24),
 
@@ -263,26 +291,92 @@ class _VisionOnboardingScreenState
     );
   }
 
+  Widget _buildKeywordSelector(VisionQuestion question) {
+    final keywords = question == VisionQuestion.valuesQuestion
+        ? ValueKeywords.options
+        : MotivationKeywords.options;
+
+    final maxSelection = question == VisionQuestion.valuesQuestion ? 3 : 999;
+    final selectedSet = _selectedKeywords[question.key] ?? {};
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: keywords.map((keyword) {
+        final isSelected = selectedSet.contains(keyword);
+        final canSelect = selectedSet.length < maxSelection || isSelected;
+
+        return FilterChip(
+          label: Text(keyword),
+          selected: isSelected,
+          onSelected: canSelect
+              ? (selected) {
+                  setState(() {
+                    final set = _selectedKeywords[question.key] ?? {};
+                    if (selected) {
+                      set.add(keyword);
+                    } else {
+                      set.remove(keyword);
+                    }
+                    _selectedKeywords[question.key] = set;
+                  });
+                }
+              : null,
+          selectedColor: Theme.of(context).colorScheme.primaryContainer,
+          checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          backgroundColor: Colors.grey[200],
+          labelStyle: TextStyle(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimaryContainer
+                : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTextInput(VisionQuestion question, ThemeData theme) {
+    return TextField(
+      controller: _controllers[question.key],
+      maxLines: 5,
+      decoration: InputDecoration(
+        hintText: '자유롭게 작성해주세요...',
+        hintStyle: TextStyle(color: Colors.grey[400]),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.all(20),
+      ),
+      style: theme.textTheme.bodyLarge,
+      onChanged: (_) => setState(() {}), // 버튼 상태 업데이트
+    );
+  }
+
   Widget _buildHintText(BuildContext context, VisionQuestion question) {
     final hints = {
-      VisionQuestion.values:
-          '💡 예: 성장, 자유, 가족, 창의성, 도전 등',
+      VisionQuestion.valuesQuestion:
+          '💡 최대 3개까지 선택할 수 있어요',
       VisionQuestion.currentIdentity:
-          '💡 예: 배우고 있는 학생, 일하는 직장인, 꿈을 찾는 탐험가 등',
+          '💡 예: 배우고 있는 학생, 일하는 직장인, 꿈을 찾는 탐험가',
       VisionQuestion.futureIdentity:
-          '💡 예: 영향력 있는 전문가, 자유로운 창작자, 행복한 부모 등',
-      VisionQuestion.lifeDream:
-          '💡 예: 세계 여행, 나만의 사업 시작, 책 출판, 가족과 행복한 삶 등',
+          '💡 예: 영향력 있는 전문가, 자유로운 창작자, 행복한 부모',
       VisionQuestion.concern:
-          '💡 예: 진로 고민, 시간 부족, 자기계발 방향성 등',
-      VisionQuestion.futureGoal:
-          '💡 예: 전문 자격증 취득, 승진, 사이드 프로젝트 성공 등',
+          '💡 예: 진로 고민, 시간 관리, 자기계발 방향성',
       VisionQuestion.routine:
-          '💡 예: 아침 운동, 독서 30분, 영어 공부, 명상 등',
-      VisionQuestion.learningStyle:
-          '💡 예: 책 읽기, 강의 듣기, 실습하기, 토론하기 등',
+          '💡 예: 아침 운동 30분, 독서 10페이지, 영어 공부 1시간',
       VisionQuestion.motivation:
-          '💡 예: 성취감, 칭찬, 보상, 경쟁, 자기만족 등',
+          '💡 원하는 방식을 모두 선택하세요 (선택사항)',
     };
 
     return Container(
@@ -303,8 +397,7 @@ class _VisionOnboardingScreenState
   Widget _buildBottomButtons(BuildContext context) {
     final theme = Theme.of(context);
     final isLastPage = _currentPage == VisionQuestion.values.length - 1;
-    final currentAnswer = _controllers[VisionQuestion.values[_currentPage].key]!.text;
-    final canProceed = currentAnswer.trim().isNotEmpty;
+    final canProceed = _canProceed();
 
     return Container(
       padding: const EdgeInsets.all(24.0),
@@ -349,6 +442,7 @@ class _VisionOnboardingScreenState
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
+                  disabledBackgroundColor: Colors.grey[300],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

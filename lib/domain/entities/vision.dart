@@ -25,17 +25,20 @@ class Vision {
     return answers[question.key];
   }
 
-  /// 모든 질문에 답했는지 확인 (온보딩 완료 여부)
+  /// 모든 필수 질문에 답했는지 확인 (온보딩 완료 여부)
   bool get isComplete {
-    return VisionQuestion.values.every((q) => answers[q.key]?.isNotEmpty == true);
+    return VisionQuestion.values
+        .where((q) => !q.isOptional)
+        .every((q) => answers[q.key]?.isNotEmpty == true);
   }
 
-  /// 온보딩 진행률 (0.0 ~ 1.0)
+  /// 온보딩 진행률 (0.0 ~ 1.0) - 필수 질문 기준
   double get progress {
-    final answeredCount = VisionQuestion.values
+    final requiredQuestions = VisionQuestion.values.where((q) => !q.isOptional).toList();
+    final answeredCount = requiredQuestions
         .where((q) => answers[q.key]?.isNotEmpty == true)
         .length;
-    return answeredCount / VisionQuestion.values.length;
+    return answeredCount / requiredQuestions.length;
   }
 
   /// copyWith 메서드
@@ -71,24 +74,58 @@ class Vision {
 
 /// 비전 질문 열거형
 enum VisionQuestion {
-  valuesQuestion('values', '당신이 가장 중요하게 생각하는 가치는 무엇인가요?'),
-  currentIdentity('currentIdentity', '현재 당신은 어떤 사람인가요?'),
-  futureIdentity('futureIdentity', '3년 후, 어떤 사람이 되고 싶나요?'),
-  lifeDream('lifeDream', '인생에서 꼭 이루고 싶은 꿈은 무엇인가요?'),
-  concern('concern', '현재 가장 큰 고민은 무엇인가요?'),
-  futureGoal('futureGoal', '3년 후 당신은 무엇을 이루고 싶은 목표가 있나요?'),
-  routine('routine', '만들고 싶은 새로운 습관은 무엇인가요?'),
-  learningStyle('learningStyle', '학습하는 선호 스타일은 무엇인가요?'),
-  motivation('motivation', '무엇이 당신을 움직이게 하는 동기부여 요인인가요?');
+  valuesQuestion('values', '당신이 가장 중요하게 생각하는 가치는 무엇인가요?', true),
+  currentIdentity('currentIdentity', '지금의 당신을 한 문장으로 표현한다면?', false),
+  futureIdentity('futureIdentity', '3년 후, 어떤 사람이 되어 있고 싶나요?', false),
+  concern('concern', '요즘 가장 집중하고 싶은 주제나 고민은 무엇인가요?', false),
+  routine('routine', '앞으로 만들고 싶은 새로운 습관은 무엇인가요?', false),
+  motivation('motivation', '어떤 방식에서 가장 동기부여를 받나요?', true, true);
 
-  const VisionQuestion(this.key, this.questionText);
+  const VisionQuestion(this.key, this.questionText, this.isKeywordType, [this.isOptional = false]);
 
   final String key;
   final String questionText;
+  final bool isKeywordType; // 키워드 선택형 여부
+  final bool isOptional; // 선택사항 여부
 
   /// 질문 번호 (1부터 시작)
   int get number => index + 1;
 
   /// 전체 질문 개수
   static int get totalCount => VisionQuestion.values.length;
+
+  /// 필수 질문 개수
+  static int get requiredCount => VisionQuestion.values.where((q) => !q.isOptional).length;
+}
+
+/// 가치관 키워드 옵션
+class ValueKeywords {
+  static const List<String> options = [
+    '성장',
+    '자유',
+    '안정',
+    '도전',
+    '관계',
+    '창의성',
+    '성취',
+    '균형',
+    '배움',
+    '기여',
+    '독립',
+    '열정',
+  ];
+}
+
+/// 동기부여 방식 키워드 옵션
+class MotivationKeywords {
+  static const List<String> options = [
+    '목표 달성',
+    '칭찬과 인정',
+    '경쟁과 비교',
+    '보상',
+    '성장 실감',
+    '자기만족',
+    '타인의 응원',
+    '새로운 도전',
+  ];
 }
