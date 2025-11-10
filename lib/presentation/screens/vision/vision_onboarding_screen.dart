@@ -296,7 +296,7 @@ class _VisionOnboardingScreenState
         ? ValueKeywords.options
         : MotivationKeywords.options;
 
-    final maxSelection = question == VisionQuestion.valuesQuestion ? 3 : 999;
+    final maxSelection = 3; // 가치관과 동기부여 모두 최대 3개 선택 가능
     final selectedSet = _selectedKeywords[question.key] ?? {};
 
     return Wrap(
@@ -366,17 +366,17 @@ class _VisionOnboardingScreenState
   Widget _buildHintText(BuildContext context, VisionQuestion question) {
     final hints = {
       VisionQuestion.valuesQuestion:
-          '💡 최대 3개까지 선택할 수 있어요',
+          '💡 당신의 삶에서 가장 중요한 가치를 최대 3개까지 선택해주세요',
       VisionQuestion.currentIdentity:
-          '💡 예: 배우고 있는 학생, 일하는 직장인, 꿈을 찾는 탐험가',
+          '💡 지금 당신의 상태나 역할을 자유롭게 표현해주세요\n예: 배우고 있는 학생, 일하는 직장인, 꿈을 찾는 탐험가',
       VisionQuestion.futureIdentity:
-          '💡 예: 영향력 있는 전문가, 자유로운 창작자, 행복한 부모',
+          '💡 3년 후 이루고 싶은 모습을 구체적으로 그려보세요\n예: 영향력 있는 전문가, 자유로운 창작자, 행복한 부모',
       VisionQuestion.concern:
-          '💡 예: 진로 고민, 시간 관리, 자기계발 방향성',
+          '💡 요즘 가장 신경 쓰이거나 집중하고 싶은 주제를 적어주세요\n예: 진로 고민, 시간 관리, 자기계발 방향성',
       VisionQuestion.routine:
-          '💡 예: 아침 운동 30분, 독서 10페이지, 영어 공부 1시간',
+          '💡 새롭게 만들고 싶은 일상 습관을 구체적으로 적어주세요\n예: 아침 운동 30분, 독서 10페이지, 영어 공부 1시간',
       VisionQuestion.motivation:
-          '💡 원하는 방식을 모두 선택하세요 (선택사항)',
+          '💡 당신에게 힘이 되는 방식을 최대 3개까지 선택하세요 (선택사항)',
     };
 
     return Container(
