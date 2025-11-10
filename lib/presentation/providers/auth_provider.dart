@@ -155,34 +155,4 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       rethrow;
     }
   }
-
-  /// 카카오 로그인
-  Future<void> signInWithKakao() async {
-    state = const AsyncValue.loading();
-    try {
-      final user = await _authRepository.signInWithKakao();
-      state = AsyncValue.data(user);
-
-      // 로그인 성공 시 UserStats 로드
-      _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  /// 네이버 로그인
-  Future<void> signInWithNaver() async {
-    state = const AsyncValue.loading();
-    try {
-      final user = await _authRepository.signInWithNaver();
-      state = AsyncValue.data(user);
-
-      // 로그인 성공 시 UserStats 로드
-      _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
 }

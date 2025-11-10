@@ -61,14 +61,4 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> signInWithGoogle() async {
     return await _remoteDataSource.signInWithGoogle();
   }
-
-  @override
-  Future<User> signInWithKakao() async {
-    return await _remoteDataSource.signInWithKakao();
-  }
-
-  @override
-  Future<User> signInWithNaver() async {
-    return await _remoteDataSource.signInWithNaver();
-  }
 }

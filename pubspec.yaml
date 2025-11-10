@@ -48,8 +48,8 @@ dependencies:
 
   # 소셜 로그인
   google_sign_in: ^6.1.5
-  kakao_flutter_sdk_user: ^1.6.0
-  # flutter_naver_login: ^1.8.0  # 패키지 호환성 문제로 임시 비활성화
+  # kakao_flutter_sdk_user: ^1.6.0  # 구글 로그인만 사용
+  # flutter_naver_login: ^1.8.0  # 패키지 호환성 문제로 비활성화
 
   # 로컬 저장소
   drift: ^2.13.0
