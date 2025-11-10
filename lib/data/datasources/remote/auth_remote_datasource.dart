@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
-import 'package:flutter_naver_login/flutter_naver_login.dart';
+// import 'package:flutter_naver_login/flutter_naver_login.dart'; // 임시 비활성화
 import 'package:quest_on/data/models/user_model.dart';
 
 /// 인증 Remote DataSource
@@ -217,55 +217,56 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// 네이버 로그인
+  /// 네이버 로그인 (임시 비활성화 - 패키지 호환성 문제)
   Future<UserModel> signInWithNaver() async {
-    try {
-      // 네이버 로그인 실행
-      final NaverLoginResult result = await FlutterNaverLogin.logIn();
-
-      if (result.status != NaverLoginStatus.loggedIn) {
-        throw Exception('네이버 로그인이 취소되었습니다.');
-      }
-
-      // 네이버 사용자 정보 가져오기
-      final NaverAccountResult account = await FlutterNaverLogin.currentAccount();
-      final email = account.email;
-
-      if (email == null || email.isEmpty) {
-        throw Exception('네이버 계정에서 이메일 정보를 가져올 수 없습니다.');
-      }
-
-      // TODO: 실제 프로덕션에서는 백엔드에서 Custom Token을 발급받아 로그인하는 방식 권장
-      // 현재는 임시로 이메일 기반 로그인/가입 처리
-      try {
-        // 기존 사용자 로그인 시도
-        final password = 'naver_${account.id}';
-        final response = await _supabase.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-        return UserModel.fromSupabaseUser(response.user!);
-      } catch (e) {
-        // 사용자가 없으면 회원가입
-        final password = 'naver_${account.id}';
-        final response = await _supabase.auth.signUp(
-          email: email,
-          password: password,
-          data: {
-            'name': account.name ?? '네이버 사용자',
-            'provider': 'naver',
-          },
-        );
-
-        if (response.user == null) {
-          throw Exception('네이버 로그인에 실패했습니다.');
-        }
-
-        return UserModel.fromSupabaseUser(response.user!);
-      }
-    } catch (e) {
-      throw Exception('네이버 로그인 중 오류가 발생했습니다: $e');
-    }
+    throw UnimplementedError('네이버 로그인은 현재 지원되지 않습니다.');
+    // try {
+    //   // 네이버 로그인 실행
+    //   final NaverLoginResult result = await FlutterNaverLogin.logIn();
+    //
+    //   if (result.status != NaverLoginStatus.loggedIn) {
+    //     throw Exception('네이버 로그인이 취소되었습니다.');
+    //   }
+    //
+    //   // 네이버 사용자 정보 가져오기
+    //   final NaverAccountResult account = await FlutterNaverLogin.currentAccount();
+    //   final email = account.email;
+    //
+    //   if (email == null || email.isEmpty) {
+    //     throw Exception('네이버 계정에서 이메일 정보를 가져올 수 없습니다.');
+    //   }
+    //
+    //   // TODO: 실제 프로덕션에서는 백엔드에서 Custom Token을 발급받아 로그인하는 방식 권장
+    //   // 현재는 임시로 이메일 기반 로그인/가입 처리
+    //   try {
+    //     // 기존 사용자 로그인 시도
+    //     final password = 'naver_${account.id}';
+    //     final response = await _supabase.auth.signInWithPassword(
+    //       email: email,
+    //       password: password,
+    //     );
+    //     return UserModel.fromSupabaseUser(response.user!);
+    //   } catch (e) {
+    //     // 사용자가 없으면 회원가입
+    //     final password = 'naver_${account.id}';
+    //     final response = await _supabase.auth.signUp(
+    //       email: email,
+    //       password: password,
+    //       data: {
+    //         'name': account.name ?? '네이버 사용자',
+    //         'provider': 'naver',
+    //       },
+    //     );
+    //
+    //     if (response.user == null) {
+    //       throw Exception('네이버 로그인에 실패했습니다.');
+    //     }
+    //
+    //     return UserModel.fromSupabaseUser(response.user!);
+    //   }
+    // } catch (e) {
+    //   throw Exception('네이버 로그인 중 오류가 발생했습니다: $e');
+    // }
   }
 
   /// AuthException 처리
