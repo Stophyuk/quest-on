@@ -4,7 +4,6 @@ import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 import 'package:quest_on/presentation/screens/auth/login_screen.dart';
 import 'package:quest_on/presentation/screens/auth/signup_screen.dart';
-import 'package:quest_on/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:quest_on/presentation/screens/main/main_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_survey_screen.dart';
@@ -99,10 +98,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignupScreen(),
       ),
 
-      // 온보딩
+      // 온보딩 (비전 기반 9가지 질문)
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) => const VisionOnboardingScreen(),
       ),
 
       // 비전 메인 화면
