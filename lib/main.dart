@@ -7,6 +7,8 @@ import 'package:quest_on/core/constants/env.dart';
 import 'package:quest_on/core/utils/router.dart';
 import 'package:quest_on/data/services/quest_widget_service.dart';
 import 'package:quest_on/data/services/analytics_service.dart';
+import 'package:quest_on/data/services/ad_service.dart';
+import 'package:quest_on/data/services/purchase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +32,20 @@ void main() async {
 
   // 위젯 서비스 초기화
   await QuestWidgetService.initialize();
+
+  // 광고 서비스 초기화
+  try {
+    await AdService().initialize();
+  } catch (e) {
+    print('[Main] 광고 서비스 초기화 실패: $e');
+  }
+
+  // 인앱 구매 서비스 초기화
+  try {
+    await PurchaseService().initialize();
+  } catch (e) {
+    print('[Main] 인앱 구매 서비스 초기화 실패: $e');
+  }
 
   runApp(
     const ProviderScope(

@@ -11,11 +11,15 @@ class AppTheme {
   static const Color errorColor = Color(0xFFEF4444);
   static const Color successColor = Color(0xFF10B981);
   static const Color warningColor = Color(0xFFF59E0B); // Orange
+  static const Color goldColor = Color(0xFFFFD700); // Gold
 
   // 텍스트 컬러
   static const Color textPrimary = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textHint = Color(0xFF9CA3AF);
+
+  // UI 요소 컬러
+  static const Color borderColor = Color(0xFFE5E7EB);
 
   // 컨디션별 컬러
   static const Map<int, Color> conditionColors = {
