@@ -4,6 +4,7 @@ import 'package:quest_on/domain/repositories/auth_repository.dart';
 import 'package:quest_on/data/repositories/auth_repository_impl.dart';
 import 'package:quest_on/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:quest_on/presentation/providers/user_stats_provider.dart';
+import 'package:quest_on/data/services/analytics_service.dart';
 
 // Provider: AuthRemoteDataSource
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -70,6 +71,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       );
       state = AsyncValue.data(user);
 
+      // Analytics: 로그인 이벤트
+      await AnalyticsService().logLogin(loginMethod: 'email');
+
       // 로그인 성공 시 UserStats 로드
       if (user != null) {
         _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
@@ -98,6 +102,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
       // 로그인된 상태로 설정 (Supabase가 자동으로 session 생성)
       state = AsyncValue.data(user);
+
+      // Analytics: 회원가입 이벤트
+      await AnalyticsService().logSignUp(signUpMethod: 'email');
 
       // 회원가입 성공 시 UserStats 로드
       _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);
@@ -147,6 +154,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     try {
       final user = await _authRepository.signInWithGoogle();
       state = AsyncValue.data(user);
+
+      // Analytics: Google 로그인 이벤트
+      await AnalyticsService().logLogin(loginMethod: 'google');
 
       // 로그인 성공 시 UserStats 로드
       _ref.read(userStatsNotifierProvider.notifier).loadUserStats(user.id);

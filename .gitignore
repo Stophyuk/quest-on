@@ -54,6 +54,11 @@ app.*.map.json
 *APIkey*
 *.txt
 
+# Firebase
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+firebase_options.dart
+
 # Local configuration
 .claude/settings.local.json
 .playwright-mcp/
