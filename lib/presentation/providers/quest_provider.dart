@@ -94,7 +94,6 @@ class QuestNotifier extends StateNotifier<AsyncValue<List<Quest>>> {
     String? description,
     required QuestCategory category,
     required QuestDifficulty difficulty,
-    required QuestCondition targetCondition,
     required int targetCount,
   }) async {
     try {
@@ -104,7 +103,6 @@ class QuestNotifier extends StateNotifier<AsyncValue<List<Quest>>> {
         description: description,
         category: category,
         difficulty: difficulty,
-        targetCondition: targetCondition,
         targetCount: targetCount,
       );
 
@@ -154,33 +152,20 @@ class QuestNotifier extends StateNotifier<AsyncValue<List<Quest>>> {
     }
   }
 
-  /// 컨디션 변경 시 모든 퀘스트 목표 조정
-  Future<void> adjustAllQuestsTarget(QuestCondition newCondition) async {
-    if (_currentUserId == null) return;
-
-    try {
-      state.whenData((quests) async {
-        for (final quest in quests) {
-          if (quest.isActive) {
-            await _repository.adjustQuestTarget(
-              questId: quest.id,
-              newCondition: newCondition,
-            );
-          }
-        }
-
-        // 상태 갱신
-        await loadQuests(_currentUserId!);
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   /// 퀘스트 완료
   Future<Quest> completeQuest(String questId) async {
     try {
       final completedQuest = await _repository.completeQuest(questId);
+
+      // 경험치 추가
+      final expToAdd = completedQuest.difficulty.baseExp;
+      try {
+        await _ref.read(userStatsNotifierProvider.notifier).addExp(expToAdd);
+        print('✅ 퀘스트 완료 - 경험치 +$expToAdd (난이도: ${completedQuest.difficulty.label})');
+      } catch (e) {
+        print('❌ 경험치 추가 실패: $e');
+        // 경험치 추가 실패해도 퀘스트 완료는 유지
+      }
 
       // 상태 갱신
       if (_currentUserId != null) {

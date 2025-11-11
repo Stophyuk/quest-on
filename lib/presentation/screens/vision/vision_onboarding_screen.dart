@@ -45,11 +45,15 @@ class _VisionOnboardingScreenState
   }
 
   void _nextPage() {
+    print('[온보딩] _nextPage 호출: 현재 페이지 = $_currentPage, 전체 = ${VisionQuestion.values.length}');
     if (_currentPage < VisionQuestion.values.length - 1) {
+      print('[온보딩] 다음 페이지로 이동 시도');
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+    } else {
+      print('[온보딩] 마지막 페이지입니다');
     }
   }
 
@@ -64,21 +68,27 @@ class _VisionOnboardingScreenState
 
   bool _canProceed() {
     final currentQuestion = VisionQuestion.values[_currentPage];
+    print('[온보딩] _canProceed 체크: 페이지=$_currentPage, 질문=${currentQuestion.key}');
 
     if (currentQuestion.isOptional) {
+      print('[온보딩] 선택사항 질문 → true');
       return true; // 선택사항은 항상 진행 가능
     }
 
     if (currentQuestion.isKeywordType) {
       final selected = _selectedKeywords[currentQuestion.key] ?? {};
+      print('[온보딩] 키워드형 질문: 선택된 개수=${selected.length}');
       return selected.isNotEmpty;
     } else {
       final text = _controllers[currentQuestion.key]?.text ?? '';
+      print('[온보딩] 텍스트형 질문: 입력된 텍스트="${text}", 길이=${text.length}, isEmpty=${text.trim().isEmpty}');
       return text.trim().isNotEmpty;
     }
   }
 
   Future<void> _submit() async {
+    print('[온보딩] _submit 시작');
+
     // 모든 답변 수집
     for (var question in VisionQuestion.values) {
       if (question.isKeywordType) {
@@ -89,21 +99,28 @@ class _VisionOnboardingScreenState
       }
     }
 
+    print('[온보딩] 수집된 답변: $_answers');
+
     setState(() {
       _isSubmitting = true;
     });
 
     try {
+      print('[온보딩] Vision 생성 시작');
       // Vision 생성 (비전 노트는 나중에 AI가 생성)
       final vision = await ref
           .read(visionNotifierProvider.notifier)
           .createVision(answers: _answers);
 
+      print('[온보딩] Vision 생성 완료: ${vision.id}');
+
       if (mounted) {
+        print('[온보딩] /vision/generating으로 이동');
         // AI 비전 노트 생성 화면으로 이동
         context.go('/vision/generating', extra: vision.id);
       }
     } catch (e) {
+      print('[온보딩] 에러 발생: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -337,30 +354,76 @@ class _VisionOnboardingScreenState
   }
 
   Widget _buildTextInput(VisionQuestion question, ThemeData theme) {
-    return TextField(
-      controller: _controllers[question.key],
-      maxLines: 5,
-      decoration: InputDecoration(
-        hintText: '자유롭게 작성해주세요...',
-        hintStyle: TextStyle(color: Colors.grey[400]),
-        filled: true,
-        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: theme.colorScheme.primary,
-            width: 2,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _controllers[question.key],
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: '자유롭게 작성해주세요...',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.all(20),
           ),
+          style: theme.textTheme.bodyLarge,
+          onChanged: (_) => setState(() {}), // 버튼 상태 업데이트
         ),
-        contentPadding: const EdgeInsets.all(20),
-      ),
-      style: theme.textTheme.bodyLarge,
-      onChanged: (_) => setState(() {}), // 버튼 상태 업데이트
+
+        // 테스트용 예시 입력 버튼 (2~5번 질문만)
+        if (_shouldShowTestButton(question)) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _fillTestExample(question),
+            icon: const Icon(Icons.science, size: 18),
+            label: const Text('테스트용 예시 입력'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.orange,
+              side: const BorderSide(color: Colors.orange),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+          ),
+        ],
+      ],
     );
+  }
+
+  bool _shouldShowTestButton(VisionQuestion question) {
+    // 2~5번 질문만 테스트 버튼 표시
+    return question == VisionQuestion.currentIdentity ||
+           question == VisionQuestion.futureIdentity ||
+           question == VisionQuestion.concern ||
+           question == VisionQuestion.routine;
+  }
+
+  void _fillTestExample(VisionQuestion question) {
+    final examples = {
+      VisionQuestion.currentIdentity: '일과 공부를 병행하며 성장하고 있는 직장인',
+      VisionQuestion.futureIdentity: '자신의 전문성을 인정받으며 팀을 이끄는 리더',
+      VisionQuestion.concern: '효율적인 시간 관리와 업무 역량 향상',
+      VisionQuestion.routine: '매일 아침 30분 독서하고, 주 3회 운동하기',
+    };
+
+    final example = examples[question];
+    print('[온보딩] 테스트 예시 입력: 질문=${question.key}, 예시=$example');
+    if (example != null) {
+      _controllers[question.key]?.text = example;
+      print('[온보딩] 컨트롤러에 텍스트 설정 완료');
+      setState(() {}); // 버튼 상태 업데이트
+      print('[온보딩] setState 호출 완료');
+    }
   }
 
   Widget _buildHintText(BuildContext context, VisionQuestion question) {

@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
+import 'package:quest_on/domain/entities/vision.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
-import 'package:quest_on/presentation/providers/vision_provider.dart';
+import 'package:quest_on/presentation/providers/vision_v2_provider.dart';
 
 /// 비전 메인 화면
 ///
@@ -22,12 +23,9 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
   @override
   void initState() {
     super.initState();
-    // 프로필 로드
+    // 비전 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(authStateProvider).value;
-      if (user != null) {
-        ref.read(visionNotifierProvider.notifier).loadProfile(user.id);
-      }
+      ref.read(visionNotifierProvider.notifier).loadVision();
     });
   }
 
@@ -43,16 +41,16 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
         }
 
         return visionStateAsync.when(
-          data: (profile) {
-            if (profile == null) {
-              return _buildNoProfile(context);
+          data: (vision) {
+            if (vision == null) {
+              return _buildNoVision(context);
             }
 
-            if (profile.visionNote == null) {
-              return _buildNoVisionNote(context, profile.name);
+            if (vision.visionNote.isEmpty) {
+              return _buildNoVisionNote(context);
             }
 
-            return _buildVisionNote(context, profile);
+            return _buildVisionNote(context, vision);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => _buildError(context, error),
@@ -63,8 +61,8 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
     );
   }
 
-  /// 프로필이 없는 경우 (설문 시작 유도)
-  Widget _buildNoProfile(BuildContext context) {
+  /// 비전이 없는 경우 (온보딩 시작 유도)
+  Widget _buildNoVision(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing * 2),
@@ -105,11 +103,11 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.push('/vision/survey');
+                  context.go('/onboarding');
                 },
                 icon: const Icon(Icons.edit_note),
                 label: const Text(
-                  '비전 설문 시작하기',
+                  '비전 온보딩 시작하기',
                   style: TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -123,8 +121,8 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
     );
   }
 
-  /// 프로필은 있지만 비전 노트가 없는 경우
-  Widget _buildNoVisionNote(BuildContext context, String name) {
+  /// 비전은 있지만 비전 노트가 없는 경우
+  Widget _buildNoVisionNote(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing * 2),
@@ -145,7 +143,7 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              '$name님의 AI 코칭을\n생성해보세요',
+              'AI 비전 노트를\n생성해보세요',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -153,7 +151,7 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              '설문 내용을 바탕으로 AI가\n맞춤형 코칭을 작성해드립니다',
+              '온보딩 내용을 바탕으로 AI가\n맞춤형 비전 노트를 작성해드립니다',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                     height: 1.6,
@@ -165,11 +163,11 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.push('/vision/coaching');
+                  context.go('/onboarding');
                 },
                 icon: const Icon(Icons.auto_awesome),
                 label: const Text(
-                  'AI 코칭 생성하기',
+                  '온보딩 시작하기',
                   style: TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -184,7 +182,7 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
   }
 
   /// 비전 노트 표시
-  Widget _buildVisionNote(BuildContext context, profile) {
+  Widget _buildVisionNote(BuildContext context, Vision vision) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppConstants.spacing * 2),
       child: Column(
@@ -211,14 +209,14 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${profile.name}님의 비전',
+                      '나의 비전',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'AI 맞춤 코칭',
+                      'AI 생성 비전 노트',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.textSecondary,
                           ),
@@ -230,111 +228,7 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 목표 표시
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-              border: Border.all(
-                color: AppTheme.primaryColor.withOpacity(0.2),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.flag,
-                      color: AppTheme.primaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '목표',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  profile.goal,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 가치관 표시
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.favorite,
-                      color: AppTheme.secondaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '소중한 가치',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: profile.values.map<Widget>((value) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.secondaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          color: AppTheme.secondaryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // AI 코칭 노트
-          Text(
-            'AI 코칭',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 12),
+          // AI 비전 노트
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -347,7 +241,7 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
               ),
             ),
             child: Text(
-              profile.visionNote!,
+              vision.visionNote,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     height: 1.6,
                   ),
@@ -355,22 +249,20 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 로드맵 버튼 (로드맵이 있으면)
-          if (profile.goalTree != null) ...[
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  context.push('/vision/roadmap');
-                },
-                icon: const Icon(Icons.map_outlined),
-                label: const Text('실행 로드맵 보기'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+          // 로드맵 버튼
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                context.push('/vision/roadmap');
+              },
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('실행 로드맵 보기'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
-          ],
+          ),
 
           // 재생성 버튼
           const SizedBox(height: 12),

@@ -28,41 +28,18 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   // Agent-Quick.md: Magic String 제거
   static const String _defaultWeekGoal = '이번 주 목표 달성하기';
 
-  QuestCondition _selectedCondition = QuestCondition.normal;
   bool _hasLoadedQuests = false;
   bool _isLoadingAiSuggestions = false;
   final AiRemoteDataSource _aiDataSource = AiRemoteDataSource();
+
+  // AI 추천 캐싱
+  List<Map<String, dynamic>>? _cachedSuggestions; // 캐시된 추천 목록
+  Set<String> _addedQuestTitles = {}; // 이미 추가한 퀘스트 제목들
 
   @override
   void initState() {
     super.initState();
     // 퀘스트 로드는 build에서 authState를 listen하여 처리
-  }
-
-  Future<void> _onConditionChanged(QuestCondition newCondition) async {
-    setState(() {
-      _selectedCondition = newCondition;
-    });
-
-    try {
-      await ref
-          .read(questNotifierProvider.notifier)
-          .adjustAllQuestsTarget(newCondition);
-
-      if (mounted) {
-        UiHelpers.showSuccessSnackBar(
-          context,
-          '컨디션이 "${newCondition.label}"로 변경되었습니다',
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        UiHelpers.showErrorSnackBar(
-          context,
-          '목표 조정 중 오류가 발생했습니다: $e',
-        );
-      }
-    }
   }
 
   Future<void> _onQuestTap(Quest quest) async {
@@ -105,14 +82,30 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   }
 
   Future<void> _onAiSuggestTap() async {
+    // 캐시가 있고 이미 추가하지 않은 항목이 있으면 캐시 사용
+    if (_cachedSuggestions != null) {
+      final availableSuggestions = _cachedSuggestions!
+          .where((s) => !_addedQuestTitles.contains(s['title']))
+          .toList();
+
+      if (availableSuggestions.isNotEmpty) {
+        await _showSuggestionsModal(availableSuggestions);
+        return;
+      }
+    }
+
+    // 캐시가 없거나 모두 추가된 경우 새로 요청
+    await _fetchNewSuggestions();
+  }
+
+  /// AI로부터 새로운 추천 받기
+  Future<void> _fetchNewSuggestions() async {
     setState(() => _isLoadingAiSuggestions = true);
 
     try {
-      // AI 추천 받기
       final currentGoal = _getCurrentWeekGoal();
       final result = await _aiDataSource.getSuggestedQuests(
         currentWeekGoal: currentGoal,
-        condition: _selectedCondition.label,
       );
 
       if (!mounted) return;
@@ -122,42 +115,11 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
         throw Exception('AI 추천 결과가 없습니다');
       }
 
-      // 모달로 결과 표시
-      await AiQuestSuggestionsModal.show(
-        context: context,
-        suggestions: suggestions.cast<Map<String, dynamic>>(),
-        onQuestSelect: (suggestion) async {
-          // 퀘스트 추가
-          try {
-            final user = ref.read(authStateProvider).value;
-            if (user == null) return;
+      // 캐시 저장 및 추가된 퀘스트 초기화
+      _cachedSuggestions = suggestions.cast<Map<String, dynamic>>();
+      _addedQuestTitles.clear();
 
-            await ref.read(questNotifierProvider.notifier).createQuest(
-                  userId: user.id,
-                  title: suggestion['title'] ?? '',
-                  category: QuestParsers.parseCategory(suggestion['category'] ?? '생산성'),
-                  difficulty: QuestParsers.parseDifficulty(suggestion['difficulty'] ?? 'normal'),
-                  targetCondition: _selectedCondition,
-                  targetCount: 1,
-                  description: suggestion['reason'],
-                );
-
-            if (mounted) {
-              UiHelpers.showSuccessSnackBar(
-                context,
-                '퀘스트가 추가되었습니다',
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              UiHelpers.showErrorSnackBar(
-                context,
-                ErrorView.getFriendlyMessage(e),
-              );
-            }
-          }
-        },
-      );
+      await _showSuggestionsModal(_cachedSuggestions!);
     } catch (e) {
       if (mounted) {
         UiHelpers.showErrorSnackBar(
@@ -170,6 +132,67 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
         setState(() => _isLoadingAiSuggestions = false);
       }
     }
+  }
+
+  /// 추천 모달 표시
+  Future<void> _showSuggestionsModal(List<Map<String, dynamic>> suggestions) async {
+    await AiQuestSuggestionsModal.show(
+      context: context,
+      suggestions: suggestions,
+      onQuestsSelect: (selectedSuggestions) async {
+        // 선택된 퀘스트들 추가
+        try {
+          final user = ref.read(authStateProvider).value;
+          if (user == null) return;
+
+          int successCount = 0;
+          for (final suggestion in selectedSuggestions) {
+            try {
+              await ref.read(questNotifierProvider.notifier).createQuest(
+                    userId: user.id,
+                    title: suggestion['title'] ?? '',
+                    category: QuestParsers.parseCategory(suggestion['category'] ?? '생산성'),
+                    difficulty: QuestParsers.parseDifficulty(suggestion['difficulty'] ?? 'normal'),
+                    targetCount: 1,
+                    description: suggestion['reason'],
+                  );
+
+              // 추가한 퀘스트 제목 기록
+              _addedQuestTitles.add(suggestion['title'] ?? '');
+              successCount++;
+            } catch (e) {
+              print('퀘스트 추가 실패: ${suggestion['title']}, 에러: $e');
+            }
+          }
+
+          if (mounted) {
+            if (successCount > 0) {
+              UiHelpers.showSuccessSnackBar(
+                context,
+                '$successCount개의 퀘스트가 추가되었습니다',
+              );
+            } else {
+              UiHelpers.showErrorSnackBar(
+                context,
+                '퀘스트 추가 중 오류가 발생했습니다',
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            UiHelpers.showErrorSnackBar(
+              context,
+              ErrorView.getFriendlyMessage(e),
+            );
+          }
+        }
+      },
+      onRefresh: () async {
+        // 다시 추천받기
+        Navigator.of(context).pop(); // 모달 닫기
+        await _fetchNewSuggestions();
+      },
+    );
   }
 
   /// 퀘스트 옵션 표시 (편집/삭제)
@@ -264,9 +287,6 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
                 child: const PlayerCard(),
               ),
 
-              // 컨디션 선택기
-              _buildConditionSelector(),
-
               // 오늘 완료 통계
               _buildTodayStats(user.id),
 
@@ -302,60 +322,6 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
         onRetry: () {
           ref.invalidate(authStateProvider);
         },
-      ),
-    );
-  }
-
-  /// 컨디션 선택기
-  Widget _buildConditionSelector() {
-    return Container(
-      padding: const EdgeInsets.all(AppConstants.spacing * 2),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '오늘의 컨디션',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: QuestCondition.values.map((condition) {
-              final isSelected = _selectedCondition == condition;
-              return ChoiceChip(
-                label: Text(condition.label),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) {
-                    _onConditionChanged(condition);
-                  }
-                },
-                selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                checkmarkColor: AppTheme.primaryColor,
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '컨디션에 따라 목표가 자동 조정됩니다',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-          ),
-        ],
       ),
     );
   }
@@ -396,24 +362,66 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
   /// AI 추천 버튼
   Widget _buildAiSuggestionButton() {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      margin: const EdgeInsets.symmetric(
         horizontal: AppConstants.spacing * 2,
         vertical: AppConstants.spacing,
       ),
-      child: ElevatedButton.icon(
-        onPressed: _isLoadingAiSuggestions ? null : _onAiSuggestTap,
-        icon: _isLoadingAiSuggestions
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.auto_awesome),
-        label: Text(_isLoadingAiSuggestions ? 'AI 분석 중...' : 'AI 퀘스트 추천'),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          backgroundColor: AppTheme.secondaryColor,
-          foregroundColor: Colors.white,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _isLoadingAiSuggestions
+              ? [Colors.grey, Colors.grey.shade400]
+              : [AppTheme.primaryColor, AppTheme.secondaryColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _isLoadingAiSuggestions
+            ? []
+            : [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isLoadingAiSuggestions ? null : _onAiSuggestTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_isLoadingAiSuggestions)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                const SizedBox(width: 12),
+                Text(
+                  _isLoadingAiSuggestions ? 'AI 분석 중...' : 'AI 퀘스트 추천받기',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

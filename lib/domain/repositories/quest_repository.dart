@@ -9,7 +9,6 @@ abstract class QuestRepository {
     String? description,
     required QuestCategory category,
     required QuestDifficulty difficulty,
-    required QuestCondition targetCondition,
     required int targetCount,
   });
 
@@ -30,12 +29,6 @@ abstract class QuestRepository {
 
   /// 퀘스트 진행 (+1)
   Future<Quest> incrementQuestProgress(String questId);
-
-  /// 컨디션 변경 시 목표 재조정
-  Future<Quest> adjustQuestTarget({
-    required String questId,
-    required QuestCondition newCondition,
-  });
 
   /// 퀘스트 완료 처리
   Future<Quest> completeQuest(String questId);

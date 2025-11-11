@@ -49,9 +49,58 @@ class GoalTreeNotifier extends StateNotifier<AsyncValue<GoalTree?>> {
       // OpenAI로 Goal Tree 생성
       final goalTreeJson = await _openAIService.generateGoalTree(visionNote);
 
-      // TODO: JSON 파싱하여 Goal 리스트 생성
-      // 임시로 빈 리스트 사용
+      print('[GoalProvider] OpenAI JSON 파싱 시작: ${goalTreeJson.keys}');
+
+      // JSON 파싱하여 Goal 리스트 생성
       final goals = <Goal>[];
+      int orderIndex = 0;
+
+      // 장기 목표 (1-3년)
+      final longTermGoalsJson = goalTreeJson['longTermGoals'] as List<dynamic>? ?? [];
+      for (var goalJson in longTermGoalsJson) {
+        goals.add(Goal(
+          id: '', // DB에서 생성
+          userId: '', // Repository에서 설정
+          goalTreeId: '', // Repository에서 설정
+          title: goalJson['title'] as String? ?? '목표',
+          description: goalJson['description'] as String?,
+          timeframe: GoalTimeframe.longTerm,
+          orderIndex: orderIndex++,
+          createdAt: DateTime.now(),
+        ));
+      }
+
+      // 중기 목표 (3-6개월)
+      final midTermGoalsJson = goalTreeJson['midTermGoals'] as List<dynamic>? ?? [];
+      for (var goalJson in midTermGoalsJson) {
+        goals.add(Goal(
+          id: '',
+          userId: '',
+          goalTreeId: '',
+          title: goalJson['title'] as String? ?? '목표',
+          description: goalJson['description'] as String?,
+          timeframe: GoalTimeframe.midTerm,
+          orderIndex: orderIndex++,
+          createdAt: DateTime.now(),
+        ));
+      }
+
+      // 단기 목표 (1개월)
+      final shortTermGoalsJson = goalTreeJson['shortTermGoals'] as List<dynamic>? ?? [];
+      for (var goalJson in shortTermGoalsJson) {
+        goals.add(Goal(
+          id: '',
+          userId: '',
+          goalTreeId: '',
+          title: goalJson['title'] as String? ?? '목표',
+          description: goalJson['description'] as String?,
+          timeframe: GoalTimeframe.shortTerm,
+          orderIndex: orderIndex++,
+          createdAt: DateTime.now(),
+        ));
+      }
+
+      print('[GoalProvider] 파싱된 목표 개수: ${goals.length}');
 
       // Goal Tree 저장
       final goalTree = await _goalRepository.createGoalTree(
@@ -62,6 +111,7 @@ class GoalTreeNotifier extends StateNotifier<AsyncValue<GoalTree?>> {
       state = AsyncValue.data(goalTree);
       return goalTree;
     } catch (e, st) {
+      print('[GoalProvider] Goal Tree 생성 실패: $e');
       state = AsyncValue.error(e, st);
       rethrow;
     }

@@ -114,6 +114,44 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
     }
   }
 
+  /// 프로필 업데이트 (닉네임, 캐릭터)
+  Future<UserStats> updateProfile({
+    required String nickname,
+    required String character,
+  }) async {
+    if (_currentUserId == null) {
+      throw Exception('사용자 ID가 설정되지 않았습니다');
+    }
+
+    try {
+      final currentStats = state.value;
+      if (currentStats == null) {
+        throw Exception('사용자 통계를 찾을 수 없습니다');
+      }
+
+      // 업데이트된 UserStats 생성
+      final updatedStats = UserStats(
+        userId: currentStats.userId,
+        level: currentStats.level,
+        currentExp: currentStats.currentExp,
+        totalExp: currentStats.totalExp,
+        nickname: nickname,
+        character: character,
+        updatedAt: DateTime.now(),
+      );
+
+      // Repository를 통해 업데이트
+      await _repository.updateUserStats(updatedStats);
+
+      // 상태 업데이트
+      state = AsyncValue.data(updatedStats);
+
+      return updatedStats;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// 현재 레벨
   int get currentLevel {
     return state.value?.level ?? 1;

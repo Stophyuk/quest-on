@@ -36,12 +36,18 @@ class _GoalTreeGeneratingScreenState
   @override
   void initState() {
     super.initState();
+    print('[목표트리생성] initState 시작 - visionId: ${widget.vision.id}');
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    _startGeneration();
+    // 위젯 빌드가 완료된 후 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('[목표트리생성] postFrameCallback 실행 - _startGeneration 호출');
+      _startGeneration();
+    });
+    print('[목표트리생성] initState 완료');
   }
 
   @override
@@ -51,14 +57,17 @@ class _GoalTreeGeneratingScreenState
   }
 
   Future<void> _startGeneration() async {
+    print('[목표트리생성] _startGeneration 시작');
     setState(() {
       _isGenerating = true;
     });
+    print('[목표트리생성] _isGenerating = true 설정 완료');
 
     // 단계별 메시지 변경
     _animateSteps();
 
     try {
+      print('[목표트리생성] generateGoalTree 호출 시작');
       // AI 목표 트리 생성
       final goalTree = await ref
           .read(goalTreeNotifierProvider.notifier)
@@ -67,11 +76,17 @@ class _GoalTreeGeneratingScreenState
             visionNote: widget.vision.visionNote,
           );
 
+      print('[목표트리생성] generateGoalTree 완료 - goalTreeId: ${goalTree.id}');
+
       if (mounted) {
+        print('[목표트리생성] /goal-tree/view로 이동');
         // 목표 트리 표시 화면으로 이동
         context.go('/goal-tree/view', extra: goalTree);
+      } else {
+        print('[목표트리생성] mounted = false, 이동 취소');
       }
     } catch (e) {
+      print('[목표트리생성] 에러 발생: $e');
       if (mounted) {
         _showErrorDialog(e.toString());
       }
@@ -157,40 +172,40 @@ class _GoalTreeGeneratingScreenState
 
               const SizedBox(height: 48),
 
-              // 현재 단계 표시
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.primary,
+              // 현재 단계 표시 (중앙 정렬)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Text(
+                      const SizedBox(width: 12),
+                      Text(
                         _currentStep,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

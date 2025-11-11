@@ -130,14 +130,27 @@ class OpenAIService {
 
       // JSON 파싱
       try {
-        // JSON 문자열에서 코드 블록 마크다운 제거 (```json ... ``` 형태)
         String cleanedJson = goalTreeJson.trim();
-        if (cleanedJson.startsWith('```')) {
-          // ```json 또는 ``` 제거
-          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```json\s*'), '');
-          cleanedJson = cleanedJson.replaceAll(RegExp(r'^```\s*'), '');
-          cleanedJson = cleanedJson.replaceAll(RegExp(r'\s*```$'), '');
-          cleanedJson = cleanedJson.trim();
+
+        // 1. ```json ... ``` 코드 블록 추출 시도
+        final codeBlockRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```', multiLine: true);
+        final match = codeBlockRegex.firstMatch(cleanedJson);
+
+        if (match != null) {
+          // 코드 블록 내부 JSON만 추출
+          cleanedJson = match.group(1)?.trim() ?? '';
+          if (kDebugMode) {
+            print('[OpenAI] 코드 블록에서 JSON 추출 완료');
+          }
+        } else {
+          // 2. 코드 블록이 없으면 첫 번째 { 또는 [ 부터 찾기
+          final jsonStartIndex = cleanedJson.indexOf(RegExp(r'[\{\[]'));
+          if (jsonStartIndex > 0) {
+            cleanedJson = cleanedJson.substring(jsonStartIndex).trim();
+            if (kDebugMode) {
+              print('[OpenAI] 설명 텍스트 제거 후 JSON 추출 완료');
+            }
+          }
         }
 
         final parsed = jsonDecode(cleanedJson) as Map<String, dynamic>;

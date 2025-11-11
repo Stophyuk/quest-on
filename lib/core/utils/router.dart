@@ -44,9 +44,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 온보딩 페이지는 항상 접근 허용 (무한 루프 방지)
-      if (isOnboarding) {
-        print('  → 온보딩 페이지, 리다이렉트 없음');
+      // 온보딩 관련 페이지는 항상 접근 허용 (무한 루프 방지)
+      final isOnboardingRelated = location.startsWith('/onboarding') ||
+          location.startsWith('/vision/generating') ||
+          location.startsWith('/vision/review') ||
+          location.startsWith('/goal-tree/generating') ||
+          location.startsWith('/goal-tree/view');
+
+      if (isOnboardingRelated) {
+        print('  → 온보딩 관련 페이지, 리다이렉트 없음');
         return null;
       }
 

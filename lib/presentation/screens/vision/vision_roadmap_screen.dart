@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quest_on/core/theme/app_theme.dart';
 import 'package:quest_on/core/constants/app_constants.dart';
+import 'package:quest_on/domain/entities/goal.dart';
+import 'package:quest_on/domain/entities/goal_tree.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
-import 'package:quest_on/presentation/providers/vision_provider.dart';
+import 'package:quest_on/presentation/providers/goal_provider.dart';
+import 'package:quest_on/presentation/providers/vision_v2_provider.dart';
 
 /// 로드맵 화면 (하단 네비게이션 탭)
 ///
-/// - 프로필 없음: 비전 설문 시작 유도
+/// - 비전 없음: 온보딩 시작 유도
 /// - 비전 노트 없음: AI 코칭 먼저 생성 유도
 /// - 로드맵 있음: 로드맵 표시
 /// - 로드맵 없음: 로드맵 생성 유도
@@ -24,12 +27,10 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
   @override
   void initState() {
     super.initState();
-    // 프로필 로드
+    // 비전 및 Goal Tree 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(authStateProvider).value;
-      if (user != null) {
-        ref.read(visionNotifierProvider.notifier).loadProfile(user.id);
-      }
+      ref.read(visionNotifierProvider.notifier).loadVision();
+      ref.read(goalTreeNotifierProvider.notifier).loadGoalTree();
     });
   }
 
@@ -37,6 +38,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
   Widget build(BuildContext context) {
     final authStateAsync = ref.watch(authStateProvider);
     final visionStateAsync = ref.watch(visionNotifierProvider);
+    final goalTreeStateAsync = ref.watch(goalTreeNotifierProvider);
 
     return authStateAsync.when(
       data: (user) {
@@ -45,20 +47,25 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
         }
 
         return visionStateAsync.when(
-          data: (profile) {
-            if (profile == null) {
-              return _buildNoProfile(context);
+          data: (vision) {
+            if (vision == null) {
+              return _buildNoVision(context);
             }
 
-            if (profile.visionNote == null) {
+            if (vision.visionNote.isEmpty) {
               return _buildNoVisionNote(context);
             }
 
-            if (profile.goalTree == null) {
-              return _buildNoRoadmap(context);
-            }
-
-            return _buildRoadmap(context, profile.goalTree!);
+            return goalTreeStateAsync.when(
+              data: (goalTree) {
+                if (goalTree == null) {
+                  return _buildNoRoadmap(context);
+                }
+                return _buildRoadmap(context, goalTree);
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => _buildError(context, error),
+            );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => _buildError(context, error),
@@ -69,8 +76,8 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
     );
   }
 
-  /// 프로필 없음 (설문 시작 유도)
-  Widget _buildNoProfile(BuildContext context) {
+  /// 비전 없음 (온보딩 시작 유도)
+  Widget _buildNoVision(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing * 2),
@@ -99,7 +106,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              '먼저 비전 설문을 완료해주세요.\nAI가 목표 달성을 위한 구체적인\n실행 계획을 생성해드립니다',
+              '먼저 비전 온보딩을 완료해주세요.\nAI가 목표 달성을 위한 구체적인\n실행 계획을 생성해드립니다',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                     height: 1.6,
@@ -111,11 +118,11 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.push('/vision/survey');
+                  context.go('/onboarding');
                 },
                 icon: const Icon(Icons.edit_note),
                 label: const Text(
-                  '비전 설문 시작하기',
+                  '비전 온보딩 시작하기',
                   style: TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -129,7 +136,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
     );
   }
 
-  /// 비전 노트 없음 (AI 코칭 먼저 생성)
+  /// 비전 노트 없음 (온보딩 완료 유도)
   Widget _buildNoVisionNote(BuildContext context) {
     return Center(
       child: Padding(
@@ -151,7 +158,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'AI 코칭을 먼저 생성해주세요',
+              '온보딩을 완료해주세요',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -159,7 +166,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              '로드맵을 생성하기 위해서는\nAI 코칭이 먼저 필요합니다',
+              '로드맵을 생성하기 위해서는\n온보딩 완료가 필요합니다',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                     height: 1.6,
@@ -171,11 +178,11 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.push('/vision/coaching');
+                  context.go('/onboarding');
                 },
                 icon: const Icon(Icons.auto_awesome),
                 label: const Text(
-                  'AI 코칭 생성하기',
+                  '온보딩 시작하기',
                   style: TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -189,7 +196,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
     );
   }
 
-  /// 로드맵 없음 (로드맵 생성 유도)
+  /// 로드맵 없음 (로드맵 자동 생성 안내)
   Widget _buildNoRoadmap(BuildContext context) {
     return Center(
       child: Padding(
@@ -211,7 +218,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              '실행 로드맵을 생성하세요',
+              '로드맵이 아직 생성되지 않았습니다',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -219,7 +226,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'AI가 비전 코칭을 바탕으로\n구체적인 단계별 실행 계획을 만들어드립니다',
+              '온보딩 완료 시 자동으로 생성됩니다.\n비전 탭에서 온보딩을 완료해주세요',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                     height: 1.6,
@@ -229,18 +236,17 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
             const SizedBox(height: 48),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: () {
-                  context.push('/vision/roadmap');
+                  context.go('/onboarding');
                 },
-                icon: const Icon(Icons.map_outlined),
+                icon: const Icon(Icons.edit_note),
                 label: const Text(
-                  '로드맵 생성하기',
+                  '온보딩 시작하기',
                   style: TextStyle(fontSize: 16),
                 ),
-                style: ElevatedButton.styleFrom(
+                style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppTheme.secondaryColor,
                 ),
               ),
             ),
@@ -251,8 +257,10 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
   }
 
   /// 로드맵 표시
-  Widget _buildRoadmap(BuildContext context, Map<String, dynamic> goalTree) {
-    final milestones = goalTree['milestones'] as List<dynamic>? ?? [];
+  Widget _buildRoadmap(BuildContext context, GoalTree goalTree) {
+    final longTermGoals = goalTree.longTermGoals;
+    final midTermGoals = goalTree.midTermGoals;
+    final shortTermGoals = goalTree.shortTermGoals;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppConstants.spacing * 2),
@@ -299,135 +307,125 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 마일스톤 리스트
-          if (milestones.isEmpty)
-            const Center(
-              child: Text('로드맵 데이터가 없습니다'),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: milestones.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final milestone = milestones[index] as Map<String, dynamic>;
-                return _buildMilestoneCard(
-                  index + 1,
-                  milestone['title'] as String? ?? '',
-                  milestone['description'] as String? ?? '',
-                  milestone['duration'] as String? ?? '',
-                );
-              },
+          // 장기 목표 (1-3년)
+          if (longTermGoals.isNotEmpty) ...[
+            _buildGoalSection(
+              context,
+              '장기 목표 (1-3년)',
+              Icons.flag,
+              Colors.purple,
+              longTermGoals,
             ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
+          ],
 
-          // 재생성 버튼
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                _showRegenerateDialog(context);
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('로드맵 다시 생성하기'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+          // 중기 목표 (3-6개월)
+          if (midTermGoals.isNotEmpty) ...[
+            _buildGoalSection(
+              context,
+              '중기 목표 (3-6개월)',
+              Icons.trending_up,
+              Colors.blue,
+              midTermGoals,
             ),
-          ),
+            const SizedBox(height: 24),
+          ],
+
+          // 단기 목표 (1개월)
+          if (shortTermGoals.isNotEmpty) ...[
+            _buildGoalSection(
+              context,
+              '단기 목표 (1개월)',
+              Icons.bolt,
+              Colors.orange,
+              shortTermGoals,
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // 빈 상태
+          if (goalTree.goals.isEmpty)
+            const Center(
+              child: Text('목표가 아직 설정되지 않았습니다'),
+            ),
         ],
       ),
     );
   }
 
-  /// 마일스톤 카드
-  Widget _buildMilestoneCard(
-    int step,
+  /// 목표 섹션 (기간별)
+  Widget _buildGoalSection(
+    BuildContext context,
     String title,
-    String description,
-    String duration,
+    IconData icon,
+    Color color,
+    List<Goal> goals,
   ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 섹션 헤더
+        Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // 목표 리스트
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: goals.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final goal = goals[index];
+            return _buildGoalCard(context, goal, color);
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 목표 카드
+  Widget _buildGoalCard(BuildContext context, Goal goal, Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         border: Border.all(
-          color: AppTheme.secondaryColor.withOpacity(0.2),
+          color: accentColor.withOpacity(0.3),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // 단계 번호
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor,
-                  borderRadius: BorderRadius.circular(18),
+          // 제목
+          Text(
+            goal.title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Center(
-                  child: Text(
-                    '$step',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // 제목
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-            ],
           ),
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: 12),
+
+          // 설명
+          if (goal.description != null && goal.description!.isNotEmpty) ...[
+            const SizedBox(height: 8),
             Text(
-              description,
+              goal.description!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                     height: 1.5,
                   ),
-            ),
-          ],
-          if (duration.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(
-                  Icons.schedule,
-                  size: 16,
-                  color: AppTheme.secondaryColor,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  duration,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.secondaryColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ],
             ),
           ],
         ],
@@ -474,7 +472,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
       builder: (context) => AlertDialog(
         title: const Text('로드맵 재생성'),
         content: const Text(
-          '로드맵을 다시 생성하면 기존 로드맵이 삭제됩니다.\n계속하시겠습니까?',
+          '로드맵을 다시 생성하려면 온보딩을 다시 진행해야 합니다.\n기존 비전과 로드맵이 삭제됩니다.\n계속하시겠습니까?',
         ),
         actions: [
           TextButton(
@@ -484,7 +482,7 @@ class _VisionRoadmapScreenState extends ConsumerState<VisionRoadmapScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.push('/vision/roadmap');
+              context.go('/onboarding');
             },
             child: const Text('재생성'),
           ),

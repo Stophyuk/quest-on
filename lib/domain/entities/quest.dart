@@ -6,7 +6,6 @@ class Quest {
   final String? description;
   final QuestCategory category;
   final QuestDifficulty difficulty;
-  final QuestCondition targetCondition; // 목표 컨디션
   final int targetCount; // 목표 횟수
   final int currentCount; // 현재 달성 횟수
   final bool isCompleted;
@@ -22,7 +21,6 @@ class Quest {
     this.description,
     required this.category,
     required this.difficulty,
-    required this.targetCondition,
     required this.targetCount,
     this.currentCount = 0,
     this.isCompleted = false,
@@ -61,7 +59,6 @@ class Quest {
     String? description,
     QuestCategory? category,
     QuestDifficulty? difficulty,
-    QuestCondition? targetCondition,
     int? targetCount,
     int? currentCount,
     bool? isCompleted,
@@ -77,7 +74,6 @@ class Quest {
       description: description ?? this.description,
       category: category ?? this.category,
       difficulty: difficulty ?? this.difficulty,
-      targetCondition: targetCondition ?? this.targetCondition,
       targetCount: targetCount ?? this.targetCount,
       currentCount: currentCount ?? this.currentCount,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -124,21 +120,3 @@ enum QuestDifficulty {
   }
 }
 
-/// 컨디션 (목표 조정 기준)
-enum QuestCondition {
-  veryBad('최악', 0.3), // 목표의 30%
-  bad('나쁨', 0.5), // 목표의 50%
-  normal('보통', 0.7), // 목표의 70%
-  good('좋음', 1.0), // 목표의 100%
-  veryGood('최고', 1.2); // 목표의 120%
-
-  final String label;
-  final double multiplier; // 목표 조정 배수
-
-  const QuestCondition(this.label, this.multiplier);
-
-  /// 컨디션에 따른 조정된 목표 계산
-  int adjustTarget(int baseTarget) {
-    return (baseTarget * multiplier).round().clamp(1, baseTarget * 2);
-  }
-}

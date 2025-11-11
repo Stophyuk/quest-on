@@ -9,7 +9,6 @@ class QuestModel extends Quest {
     super.description,
     required super.category,
     required super.difficulty,
-    required super.targetCondition,
     required super.targetCount,
     super.currentCount,
     super.isCompleted,
@@ -34,10 +33,6 @@ class QuestModel extends Quest {
         (e) => e.name == json['difficulty'] as String,
         orElse: () => QuestDifficulty.normal,
       ),
-      targetCondition: QuestCondition.values.firstWhere(
-        (e) => e.name == json['target_condition'] as String,
-        orElse: () => QuestCondition.normal,
-      ),
       targetCount: json['target_count'] as int,
       currentCount: json['current_count'] as int? ?? 0,
       isCompleted: json['is_completed'] as bool? ?? false,
@@ -60,7 +55,6 @@ class QuestModel extends Quest {
       'description': description,
       'category': category.name,
       'difficulty': difficulty.name,
-      'target_condition': targetCondition.name,
       'target_count': targetCount,
       'current_count': currentCount,
       'is_completed': isCompleted,
@@ -76,7 +70,6 @@ class QuestModel extends Quest {
       'description': description,
       'category': category.name,
       'difficulty': difficulty.name,
-      'target_condition': targetCondition.name,
       'target_count': targetCount,
       'current_count': currentCount,
       'is_completed': isCompleted,
@@ -98,37 +91,12 @@ class QuestModel extends Quest {
       description: description,
       category: category,
       difficulty: difficulty,
-      targetCondition: targetCondition,
       targetCount: targetCount,
       currentCount: newCount,
       isCompleted: isNowCompleted,
       expReward: expReward,
       createdAt: createdAt,
       completedAt: isNowCompleted ? DateTime.now() : completedAt,
-      deletedAt: deletedAt,
-    );
-  }
-
-  /// 컨디션 변경 시 목표 재조정
-  QuestModel adjustTargetByCondition(QuestCondition newCondition) {
-    // 기본 목표는 'good' 컨디션 기준
-    final baseTarget = (targetCount / targetCondition.multiplier).round();
-    final newTarget = newCondition.adjustTarget(baseTarget);
-
-    return QuestModel(
-      id: id,
-      userId: userId,
-      title: title,
-      description: description,
-      category: category,
-      difficulty: difficulty,
-      targetCondition: newCondition,
-      targetCount: newTarget,
-      currentCount: currentCount,
-      isCompleted: isCompleted,
-      expReward: expReward,
-      createdAt: createdAt,
-      completedAt: completedAt,
       deletedAt: deletedAt,
     );
   }
@@ -142,7 +110,6 @@ class QuestModel extends Quest {
       description: description,
       category: category,
       difficulty: difficulty,
-      targetCondition: targetCondition,
       targetCount: targetCount,
       currentCount: currentCount,
       isCompleted: isCompleted,
@@ -162,7 +129,6 @@ class QuestModel extends Quest {
       description: description,
       category: category,
       difficulty: difficulty,
-      targetCondition: targetCondition,
       targetCount: targetCount,
       currentCount: currentCount,
       isCompleted: isCompleted,

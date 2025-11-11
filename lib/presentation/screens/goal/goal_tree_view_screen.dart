@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quest_on/domain/entities/goal_tree.dart';
 import 'package:quest_on/domain/entities/goal.dart';
+import 'package:quest_on/presentation/providers/auth_provider.dart';
+import 'package:quest_on/presentation/providers/user_stats_provider.dart';
 
 /// 목표 트리 표시 화면
 class GoalTreeViewScreen extends ConsumerWidget {
@@ -111,7 +113,7 @@ class GoalTreeViewScreen extends ConsumerWidget {
           ),
 
           // 하단 버튼
-          _buildBottomButton(context),
+          _buildBottomButton(context, ref),
         ],
       ),
     );
@@ -333,7 +335,7 @@ class GoalTreeViewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBottomButton(BuildContext context) {
+  Widget _buildBottomButton(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -350,9 +352,45 @@ class GoalTreeViewScreen extends ConsumerWidget {
       ),
       child: SafeArea(
         child: ElevatedButton(
-          onPressed: () {
-            // 메인 화면으로 이동
-            context.go('/');
+          onPressed: () async {
+            print('[목표트리] 시작하기 버튼 클릭');
+
+            try {
+              // 현재 사용자 가져오기
+              final user = ref.read(authStateProvider).value;
+              if (user == null) {
+                print('[목표트리] 에러: 사용자 정보 없음');
+                return;
+              }
+
+              print('[목표트리] 사용자 ID: ${user.id}');
+
+              // UserStats 생성 (온보딩 완료)
+              print('[목표트리] UserStats 생성 중...');
+              await ref.read(userStatsNotifierProvider.notifier).createUserStats(
+                userId: user.id,
+                nickname: '새로운 모험가', // 기본 닉네임
+                character: '🐰', // 기본 캐릭터 (토끼)
+              );
+
+              print('[목표트리] UserStats 생성 완료');
+
+              if (context.mounted) {
+                print('[목표트리] 메인 화면으로 이동');
+                // 메인 화면으로 이동
+                context.go('/');
+              }
+            } catch (e) {
+              print('[목표트리] 에러 발생: $e');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('오류가 발생했습니다: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
           },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),

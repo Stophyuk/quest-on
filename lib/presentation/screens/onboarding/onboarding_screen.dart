@@ -365,7 +365,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           description: description.isNotEmpty ? description : null,
           category: category,
           difficulty: difficulty,
-          targetCondition: QuestCondition.normal,
           targetCount: targetCount,
         );
       }

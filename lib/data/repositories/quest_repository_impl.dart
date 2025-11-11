@@ -18,7 +18,6 @@ class QuestRepositoryImpl implements QuestRepository {
     String? description,
     required QuestCategory category,
     required QuestDifficulty difficulty,
-    required QuestCondition targetCondition,
     required int targetCount,
   }) async {
     try {
@@ -32,7 +31,6 @@ class QuestRepositoryImpl implements QuestRepository {
         description: description,
         category: category,
         difficulty: difficulty,
-        targetCondition: targetCondition,
         targetCount: targetCount,
         currentCount: 0,
         isCompleted: false,
@@ -94,7 +92,6 @@ class QuestRepositoryImpl implements QuestRepository {
               description: quest.description,
               category: quest.category,
               difficulty: quest.difficulty,
-              targetCondition: quest.targetCondition,
               targetCount: quest.targetCount,
               currentCount: quest.currentCount,
               isCompleted: quest.isCompleted,
@@ -128,26 +125,6 @@ class QuestRepositoryImpl implements QuestRepository {
   }
 
   @override
-  Future<Quest> adjustQuestTarget({
-    required String questId,
-    required QuestCondition newCondition,
-  }) async {
-    try {
-      final quest = await _remoteDataSource.getQuest(questId);
-      if (quest == null) {
-        throw Exception('퀘스트를 찾을 수 없습니다');
-      }
-
-      final adjustedQuest = quest.adjustTargetByCondition(newCondition);
-      await _remoteDataSource.updateQuest(adjustedQuest);
-
-      return adjustedQuest;
-    } catch (e) {
-      throw Exception('퀘스트 목표 조정 실패: $e');
-    }
-  }
-
-  @override
   Future<Quest> completeQuest(String questId) async {
     try {
       final quest = await _remoteDataSource.getQuest(questId);
@@ -162,7 +139,6 @@ class QuestRepositoryImpl implements QuestRepository {
         description: quest.description,
         category: quest.category,
         difficulty: quest.difficulty,
-        targetCondition: quest.targetCondition,
         targetCount: quest.targetCount,
         currentCount: quest.targetCount, // 목표 달성
         isCompleted: true,

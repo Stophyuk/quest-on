@@ -26,7 +26,6 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
 
   QuestCategory _selectedCategory = QuestCategory.health;
   QuestDifficulty _selectedDifficulty = QuestDifficulty.normal;
-  QuestCondition _selectedCondition = QuestCondition.normal;
 
   bool _isLoading = false;
 
@@ -43,7 +42,6 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
       _targetCountController.text = quest.targetCount.toString();
       _selectedCategory = quest.category;
       _selectedDifficulty = quest.difficulty;
-      _selectedCondition = quest.targetCondition;
     }
   }
 
@@ -82,7 +80,6 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
               : _descriptionController.text.trim(),
           category: _selectedCategory,
           difficulty: _selectedDifficulty,
-          targetCondition: _selectedCondition,
           targetCount: targetCount,
         );
 
@@ -102,7 +99,6 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                   : _descriptionController.text.trim(),
               category: _selectedCategory,
               difficulty: _selectedDifficulty,
-              targetCondition: _selectedCondition,
               targetCount: targetCount,
             );
 
@@ -264,43 +260,6 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
                   // 경험치 계산을 위해 setState 호출
                   setState(() {});
                 },
-              ),
-              const SizedBox(height: 24),
-
-              // 기본 컨디션
-              Text(
-                '기본 컨디션',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '퀘스트 생성 시 적용될 컨디션입니다',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: QuestCondition.values.map((condition) {
-                  final isSelected = _selectedCondition == condition;
-                  return ChoiceChip(
-                    label: Text(condition.label),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCondition = condition;
-                        });
-                      }
-                    },
-                    selectedColor: AppTheme.primaryColor.withValues(alpha: AppTheme.opacityMedium),
-                    checkmarkColor: AppTheme.primaryColor,
-                  );
-                }).toList(),
               ),
               const SizedBox(height: 32),
 

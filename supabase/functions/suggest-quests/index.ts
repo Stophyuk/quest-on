@@ -56,9 +56,11 @@ serve(async (req) => {
 
     // 3. 최근 완료한 퀘스트 조회 (컨텍스트 제공)
     const { data: recentQuests } = await supabaseClient
-      .from('quest_history')
-      .select('quest_title, difficulty')
+      .from('quests')
+      .select('title, difficulty')
       .eq('user_id', user.id)
+      .eq('is_completed', true)
+      .not('completed_at', 'is', null)
       .order('completed_at', { ascending: false })
       .limit(10)
 
@@ -70,7 +72,7 @@ serve(async (req) => {
 
     const conditionText = condition || '보통'
     const recentQuestsText = recentQuests
-      ?.map(q => `- ${q.quest_title} (${q.difficulty})`)
+      ?.map(q => `- ${q.title} (${q.difficulty})`)
       .join('\n') || '없음'
 
     const prompt = `당신은 행동과학과 습관 형성 전문가입니다. Tiny Habits, Atomic Habits, 행동 디자인 이론을 활용하여 지속 가능한 퀘스트를 추천합니다.
@@ -78,7 +80,7 @@ serve(async (req) => {
 ## 현재 상황
 **이번 주 목표**: ${currentWeekGoal}
 **오늘 컨디션**: ${conditionText}
-**최근 7일 완료 기록**:
+**최근 완료한 퀘스트**:
 ${recentQuestsText}
 
 ## 추천 전략
@@ -139,6 +141,8 @@ ${recentQuestsText}
   "motivationBoost": "컨디션에 맞는 응원 메시지 (2-3문장)"
 }
 
+**중요**: quests 배열에는 최소 3개 이상의 퀘스트를 포함해야 합니다. 사용자가 선택할 수 있도록 다양한 난이도와 카테고리를 제공하세요.
+
 ## 퀘스트 작성 예시
 ❌ 나쁜 예: "열심히 공부하기" (추상적, 측정 불가)
 ✅ 좋은 예: "React Hooks 공식 문서 3페이지 읽고 메모 3줄 작성하기" (구체적, 측정 가능)
@@ -188,21 +192,11 @@ ${recentQuestsText}
       suggestionsJSON = { quests: [] }
     }
 
-    // 5. AI 사용량 로깅
-    const tokensUsed = openaiData.usage?.total_tokens || 0
-    const costUSD = tokensUsed * 0.000002
-
-    await supabaseClient.from('ai_generation_logs').insert({
-      user_id: user.id,
-      generation_type: 'quest_suggestion',
-      tokens_used: tokensUsed,
-      cost_usd: costUSD,
-    })
-
+    // 5. 응답 반환
     return new Response(
       JSON.stringify({
         suggestions: suggestionsJSON.quests || [],
-        tokensUsed,
+        tokensUsed: openaiData.usage?.total_tokens || 0,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

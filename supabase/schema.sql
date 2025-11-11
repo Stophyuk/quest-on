@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS quests (
   description TEXT,
   category TEXT NOT NULL,
   difficulty TEXT NOT NULL,
-  target_condition TEXT NOT NULL,
   target_count INTEGER NOT NULL,
   current_count INTEGER NOT NULL DEFAULT 0,
   is_completed BOOLEAN NOT NULL DEFAULT FALSE,
