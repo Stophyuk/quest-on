@@ -63,6 +63,21 @@ firebase_options.dart
 .claude/settings.local.json
 .playwright-mcp/
 
+# Development scripts (contain sensitive keys)
+scripts/run_dev.bat
+scripts/run_dev.sh
+scripts/*.local.*
+scripts/.env
+
+# Supabase local configuration
+supabase/.env
+supabase/config.toml
+
+# IDE configurations (may contain sensitive data)
+.vscode/launch.json
+.vscode/settings.json
+.idea/runConfigurations/
+
 # Temp files
 temp_*/
 *.zip

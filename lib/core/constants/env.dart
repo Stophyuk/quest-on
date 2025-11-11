@@ -1,18 +1,23 @@
 /// 환경 변수 설정
 ///
-/// IMPORTANT: 이 파일은 .gitignore에 추가되어야 합니다.
-/// 실제 배포 시에는 dart-define 또는 flutter_dotenv를 사용하세요.
+/// ⚠️ SECURITY: 모든 민감한 값은 환경 변수로 전달해야 합니다.
+///
+/// 사용 방법:
+/// ```bash
+/// flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+/// ```
+///
+/// 또는 scripts/run_dev.bat 스크립트 사용
 class Env {
   // Supabase
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://ufbajyakzsrumrnehthq.supabase.co',
+    defaultValue: '', // ⚠️ 보안: 기본값 제거됨. 환경 변수 필수
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYmFqeWFrenNydW1ybmVodGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzU3MTYsImV4cCI6MjA3NzgxMTcxNn0.ffC1Dxq4zzcWIassEi7ZCeqinOsCQh_sJ1uKBHz3LsQ',
+    defaultValue: '', // ⚠️ 보안: 기본값 제거됨. 환경 변수 필수
   );
 
   // Sentry DSN (에러 트래킹)
@@ -20,4 +25,25 @@ class Env {
     'SENTRY_DSN',
     defaultValue: '',
   );
+
+  /// 환경 변수 유효성 검사
+  static void validate() {
+    final errors = <String>[];
+
+    if (supabaseUrl.isEmpty) {
+      errors.add('SUPABASE_URL is not set');
+    }
+    if (supabaseAnonKey.isEmpty) {
+      errors.add('SUPABASE_ANON_KEY is not set');
+    }
+
+    if (errors.isNotEmpty) {
+      throw Exception(
+        'Missing required environment variables:\n'
+        '${errors.join('\n')}\n\n'
+        'Run with: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...\n'
+        'Or use: scripts/run_dev.bat',
+      );
+    }
+  }
 }
