@@ -155,16 +155,23 @@ class QuestNotifier extends StateNotifier<AsyncValue<List<Quest>>> {
   /// 퀘스트 완료
   Future<Quest> completeQuest(String questId) async {
     try {
+      // 완료 전 퀘스트 상태 확인
+      final quests = state.value ?? [];
+      final questBefore = quests.firstWhere((q) => q.id == questId);
+      final wasAlreadyCompleted = questBefore.isCompleted;
+
       final completedQuest = await _repository.completeQuest(questId);
 
-      // 경험치 추가
-      final expToAdd = completedQuest.difficulty.baseExp;
-      try {
-        await _ref.read(userStatsNotifierProvider.notifier).addExp(expToAdd);
-        print('✅ 퀘스트 완료 - 경험치 +$expToAdd (난이도: ${completedQuest.difficulty.label})');
-      } catch (e) {
-        print('❌ 경험치 추가 실패: $e');
-        // 경험치 추가 실패해도 퀘스트 완료는 유지
+      // 이미 완료된 퀘스트가 아닐 때만 경험치 지급 (이중 지급 방지)
+      if (!wasAlreadyCompleted && completedQuest.isCompleted) {
+        final expToAdd = completedQuest.difficulty.baseExp;
+        try {
+          await _ref.read(userStatsNotifierProvider.notifier).addExp(expToAdd);
+          print('✅ 퀘스트 완료 - 경험치 +$expToAdd (난이도: ${completedQuest.difficulty.label})');
+        } catch (e) {
+          print('❌ 경험치 추가 실패: $e');
+          // 경험치 추가 실패해도 퀘스트 완료는 유지
+        }
       }
 
       // 상태 갱신
