@@ -7,6 +7,7 @@ import 'package:quest_on/core/utils/ui_helpers.dart';
 import 'package:quest_on/domain/entities/quest.dart';
 import 'package:quest_on/presentation/providers/auth_provider.dart';
 import 'package:quest_on/presentation/providers/quest_provider.dart';
+import 'package:quest_on/presentation/widgets/gradient_button.dart';
 
 /// 퀘스트 추가/편집 화면
 class QuestAddScreen extends ConsumerStatefulWidget {
@@ -310,28 +311,25 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
               const SizedBox(height: 32),
 
               // 제출 버튼
-              SizedBox(
+              GradientButton(
+                onPressed: _isLoading ? null : _onSubmit,
+                gradient: AppTheme.motivationGradient,
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _onSubmit,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _isEditMode ? '퀘스트 수정' : '퀘스트 추가',
-                          style: const TextStyle(fontSize: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
-                ),
+                      )
+                    : Text(
+                        _isEditMode ? '퀘스트 수정 ✨' : '새 모험 시작 🚀',
+                        style: const TextStyle(fontSize: 16),
+                      ),
               ),
             ],
           ),

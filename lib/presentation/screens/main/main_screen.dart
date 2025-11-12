@@ -6,6 +6,7 @@ import 'package:quest_on/presentation/screens/quest/quest_list_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_screen.dart';
 import 'package:quest_on/presentation/screens/vision/vision_roadmap_screen.dart';
 import 'package:quest_on/presentation/screens/profile/profile_screen.dart';
+import 'package:quest_on/presentation/widgets/gradient_button.dart';
 
 /// 메인 화면 (하단 네비게이션 포함)
 class MainScreen extends ConsumerStatefulWidget {
@@ -78,11 +79,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ],
       ),
       floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
+          ? GradientFAB(
               onPressed: () {
                 context.push('/quest/add');
               },
-              child: const Icon(Icons.add),
+              gradient: AppTheme.motivationGradient,
+              child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
     );

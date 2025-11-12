@@ -442,14 +442,37 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
 
   /// 퀘스트 카드
   Widget _buildQuestCard(Quest quest) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () => _onQuestTap(quest),
-        onLongPress: () => _showQuestOptions(quest),
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+    final isCompleted = quest.isCompleted;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: isCompleted ? AppTheme.successGradient : null,
+        boxShadow: isCompleted
+            ? [
+                BoxShadow(
+                  color: AppTheme.successColor.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Card(
+        elevation: isCompleted ? 0 : 3,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isCompleted
+              ? const BorderSide(color: Colors.transparent, width: 0)
+              : BorderSide.none,
+        ),
+        child: InkWell(
+          onTap: () => _onQuestTap(quest),
+          onLongPress: () => _showQuestOptions(quest),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -466,26 +489,38 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
                       quest.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
+                            color: isCompleted ? Colors.white : null,
                           ),
                     ),
                   ),
-                  // 난이도 표시
+                  // 난이도 표시 (더 돋보이게)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: _getDifficultyColor(quest.difficulty)
-                          .withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
+                      color: isCompleted
+                          ? Colors.white.withOpacity(0.3)
+                          : _getDifficultyColor(quest.difficulty)
+                              .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isCompleted
+                            ? Colors.white.withOpacity(0.5)
+                            : _getDifficultyColor(quest.difficulty)
+                                .withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
                     child: Text(
                       quest.difficulty.label,
                       style: TextStyle(
                         fontSize: 12,
-                        color: _getDifficultyColor(quest.difficulty),
-                        fontWeight: FontWeight.w600,
+                        color: isCompleted
+                            ? Colors.white
+                            : _getDifficultyColor(quest.difficulty),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -497,7 +532,9 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
                 Text(
                   quest.description!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
+                        color: isCompleted
+                            ? Colors.white.withOpacity(0.9)
+                            : AppTheme.textSecondary,
                       ),
                 ),
               ],
@@ -516,53 +553,110 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
                           children: [
                             Text(
                               '${quest.currentCount} / ${quest.targetCount}',
-                              style: Theme.of(context).textTheme.bodySmall,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: isCompleted
+                                        ? Colors.white.withOpacity(0.9)
+                                        : null,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                             Text(
                               '${quest.progressPercent}%',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w600,
+                                    color: isCompleted
+                                        ? Colors.white
+                                        : AppTheme.primaryColor,
+                                    fontWeight: FontWeight.w700,
                                   ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: quest.progress,
-                          backgroundColor: AppTheme.backgroundColor,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _getProgressColor(quest.progress),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: isCompleted
+                                  ? Colors.white.withOpacity(0.3)
+                                  : AppTheme.backgroundColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Stack(
+                              children: [
+                                FractionallySizedBox(
+                                  widthFactor: quest.progress,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: isCompleted
+                                          ? const LinearGradient(
+                                              colors: [
+                                                Colors.white,
+                                                Color(0xFFFFF59D)
+                                              ],
+                                            )
+                                          : LinearGradient(
+                                              colors: [
+                                                _getProgressColor(quest.progress),
+                                                _getProgressColor(quest.progress)
+                                                    .withOpacity(0.7),
+                                              ],
+                                            ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // 경험치 표시
+                  // 경험치 표시 (더 돋보이게)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      gradient: isCompleted
+                          ? const LinearGradient(
+                              colors: [Colors.white, Color(0xFFFFF59D)],
+                            )
+                          : LinearGradient(
+                              colors: [
+                                AppTheme.secondaryColor.withOpacity(0.15),
+                                AppTheme.secondaryColor.withOpacity(0.05),
+                              ],
+                            ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isCompleted
+                            ? Colors.white.withOpacity(0.5)
+                            : AppTheme.secondaryColor.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.star,
-                          size: 16,
-                          color: AppTheme.secondaryColor,
+                          size: 18,
+                          color: isCompleted
+                              ? AppTheme.secondaryColor
+                              : AppTheme.secondaryColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${quest.expReward}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.secondaryColor,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isCompleted
+                                ? AppTheme.textPrimary
+                                : AppTheme.secondaryColor,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],

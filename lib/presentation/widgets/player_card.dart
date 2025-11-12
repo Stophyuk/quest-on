@@ -30,40 +30,37 @@ class PlayerCard extends ConsumerWidget {
 
         return Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor.withOpacity(0.8),
-                AppTheme.secondaryColor.withOpacity(0.8),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            gradient: AppTheme.motivationGradient, // 새로운 그라데이션 사용
+            borderRadius: BorderRadius.circular(20), // 더 라운드하게
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                blurRadius: 16, // 더 부드러운 그림자
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          padding: const EdgeInsets.all(AppConstants.spacing * 2),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               Row(
                 children: [
-                  // 캐릭터 이모지
+                  // 캐릭터 이모지 (더 크고 돋보이게)
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 90,
+                    height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(40),
+                      color: Colors.white.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(45),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.4),
+                        width: 3,
+                      ),
                     ),
                     child: Center(
                       child: Text(
                         stats.character,
-                        style: const TextStyle(fontSize: 48),
+                        style: const TextStyle(fontSize: 56), // 더 크게
                       ),
                     ),
                   ),
@@ -90,12 +87,20 @@ class PlayerCard extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          stats.levelTitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.7),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            stats.levelTitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.95),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -112,40 +117,63 @@ class PlayerCard extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'EXP',
+                        'EXP 🌟',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.95),
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         '${stats.currentExp} / ${stats.currentExp + stats.expToNextLevel}',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.95),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: stats.levelProgress,
-                      minHeight: 12,
-                      backgroundColor: Colors.white.withOpacity(0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      children: [
+                        Container(
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: stats.levelProgress,
+                          child: Container(
+                            height: 14,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Colors.white, Color(0xFFFFF59D)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.5),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
-                    '다음 레벨까지 ${stats.expToNextLevel} EXP',
+                    '다음 레벨까지 ${stats.expToNextLevel} EXP! 💪',
                     style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 11,
+                      color: Colors.white.withOpacity(0.85),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
