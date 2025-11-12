@@ -3,14 +3,17 @@ import 'package:quest_on/core/constants/app_constants.dart';
 
 /// Quest ON 앱 테마
 class AppTheme {
-  // 컬러 팔레트
-  static const Color primaryColor = Color(0xFF6366F1); // Indigo
-  static const Color secondaryColor = Color(0xFFFBBF24); // Yellow
-  static const Color backgroundColor = Color(0xFFF9FAFB); // Light Gray
+  // 컬러 팔레트 (Vibrant & Motivating)
+  static const Color primaryColor = Color(0xFF8B5CF6); // Vivid Purple - 성장, 영감, 변화
+  static const Color primaryLight = Color(0xFFA78BFA); // Light Purple
+  static const Color primaryDark = Color(0xFF7C3AED); // Deep Purple
+  static const Color secondaryColor = Color(0xFFEC4899); // Hot Pink - 에너지, 열정
+  static const Color backgroundColor = Color(0xFFF5F3FF); // Soft Purple Tint - 따뜻함
   static const Color surfaceColor = Colors.white;
   static const Color errorColor = Color(0xFFEF4444);
-  static const Color successColor = Color(0xFF10B981);
-  static const Color warningColor = Color(0xFFF59E0B); // Orange
+  static const Color successColor = Color(0xFF22C55E); // Vibrant Green - 성취감 강조
+  static const Color successLight = Color(0xFF4ADE80);
+  static const Color warningColor = Color(0xFFFF9500); // Warm Orange - 따뜻한 배려
   static const Color goldColor = Color(0xFFFFD700); // Gold
 
   // 텍스트 컬러
@@ -47,6 +50,25 @@ class AppTheme {
   static const double opacityHigh = 0.5;
   static const double opacityVeryHigh = 0.8;
 
+  // 그라데이션 (Gradients for Motivation & Energy)
+  static const LinearGradient motivationGradient = LinearGradient(
+    colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)], // Purple to Pink
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [Color(0xFF22C55E), Color(0xFF06B6D4)], // Green to Cyan
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient warmGradient = LinearGradient(
+    colors: [Color(0xFFFF9500), Color(0xFFFBBF24)], // Orange to Yellow
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   // 라이트 테마 (Agent-Full.md: 성능 최적화 - static final로 캐싱)
   static final ThemeData lightTheme = _buildLightTheme();
 
@@ -76,13 +98,14 @@ class AppTheme {
         ),
       ),
 
-      // Card 테마
+      // Card 테마 (더 부드럽고 입체적으로)
       cardTheme: CardThemeData(
-        elevation: AppConstants.cardElevation,
+        elevation: 4, // 더 입체적
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          borderRadius: BorderRadius.circular(20), // 더 라운드하게
         ),
         color: surfaceColor,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
       ),
 
       // FloatingActionButton 테마

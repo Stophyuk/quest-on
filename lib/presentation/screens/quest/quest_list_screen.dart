@@ -60,7 +60,7 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
       if (mounted) {
         UiHelpers.showErrorSnackBar(
           context,
-          '진행 업데이트 중 오류가 발생했습니다: $e',
+          '앗, 잠시 문제가 생겼어요. 다시 시도해주세요 🙏',
         );
       }
     }
@@ -244,11 +244,11 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
       try {
         await ref.read(questNotifierProvider.notifier).deleteQuest(quest.id);
         if (mounted) {
-          UiHelpers.showSuccessSnackBar(context, '퀘스트가 삭제되었습니다');
+          UiHelpers.showSuccessSnackBar(context, '다음 기회에 도전해요! 💪');
         }
       } catch (e) {
         if (mounted) {
-          UiHelpers.showErrorSnackBar(context, '삭제 중 오류가 발생했습니다: $e');
+          UiHelpers.showErrorSnackBar(context, '앗, 잠시 문제가 생겼어요. 다시 시도해주세요 🙏');
         }
       }
     }

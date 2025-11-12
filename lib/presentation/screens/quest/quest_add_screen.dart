@@ -86,7 +86,7 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
         await ref.read(questNotifierProvider.notifier).updateQuest(updatedQuest);
 
         if (mounted) {
-          UiHelpers.showSuccessSnackBar(context, '퀘스트가 수정되었습니다!');
+          UiHelpers.showSuccessSnackBar(context, '퀘스트를 업데이트했어요! 💫');
           context.pop();
         }
       } else {
@@ -103,14 +103,14 @@ class _QuestAddScreenState extends ConsumerState<QuestAddScreen> {
             );
 
         if (mounted) {
-          UiHelpers.showSuccessSnackBar(context, '퀘스트가 추가되었습니다!');
+          UiHelpers.showSuccessSnackBar(context, '새 모험이 시작되었어요! ✨');
           context.pop();
         }
       }
     } catch (e) {
       if (mounted) {
         final action = _isEditMode ? '수정' : '추가';
-        UiHelpers.showErrorSnackBar(context, '퀘스트 $action 중 오류가 발생했습니다: $e');
+        UiHelpers.showErrorSnackBar(context, '앗, 잠시 문제가 생겼어요. 다시 시도해주세요 🙏');
       }
     } finally {
       if (mounted) {
