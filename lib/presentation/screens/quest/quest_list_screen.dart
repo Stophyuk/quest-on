@@ -14,6 +14,7 @@ import 'package:quest_on/presentation/widgets/player_card.dart';
 import 'package:quest_on/presentation/widgets/error_view.dart';
 import 'package:quest_on/presentation/widgets/loading_view.dart';
 import 'package:quest_on/presentation/widgets/ai_quest_suggestions_modal.dart';
+import 'package:quest_on/presentation/widgets/level_up_toast.dart';
 import 'package:quest_on/data/datasources/remote/ai_remote_datasource.dart';
 
 /// 퀘스트 목록 화면 (홈 화면)
@@ -44,6 +45,13 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
 
   Future<void> _onQuestTap(Quest quest) async {
     try {
+      // 레벨업 체크를 위해 현재 레벨 저장
+      final user = ref.read(authStateProvider).value;
+      final currentStats = user != null
+          ? await ref.read(userStatsStreamProvider(user.id).future)
+          : null;
+      final oldLevel = currentStats?.level;
+
       final updatedQuest = await ref
           .read(questNotifierProvider.notifier)
           .incrementQuestProgress(quest.id);
@@ -54,6 +62,19 @@ class _QuestListScreenState extends ConsumerState<QuestListScreen> {
             context,
             '🎉 "${updatedQuest.title}" 완료! +${updatedQuest.expReward} EXP',
           );
+
+          // 레벨업 체크
+          if (user != null && oldLevel != null) {
+            // 약간 지연 후 레벨 확인 (경험치 업데이트 시간 고려)
+            await Future.delayed(const Duration(milliseconds: 500));
+            final newStats = await ref.read(userStatsStreamProvider(user.id).future);
+            if (newStats != null && newStats.level > oldLevel) {
+              // 레벨업 발생!
+              if (mounted) {
+                LevelUpToast.show(context, newLevel: newStats.level);
+              }
+            }
+          }
         }
       }
     } catch (e) {
